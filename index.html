@@ -146,7 +146,7 @@ footer{display:flex;align-items:center;gap:12px;padding:8px 16px calc(12px + var
 <div class="dots" id="dots" aria-hidden="true"></div>
 <main class="feed" id="feed"></main>
 <footer>
-  <span class="pos" aria-live="polite"><span id="cur">1</span> <small>/ <span id="tot">14</span></small></span>
+  <span class="pos" aria-live="polite"><span id="cur">1</span> <small>/ <span id="tot">25</span></small></span>
   <button class="next" id="next" type="button"><span id="nextL">次のニュース</span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="m5 9 7 7 7-7"/></svg></button>
 </footer>
 </div>
@@ -308,7 +308,7 @@ const NEWS = [
 {"cat": "sports", "loc": [46.52, 6.63, "スイス・ローザンヌ（IOC本部）"], "region": "欧州", "accent": "#8b5cff", "title": "ロシアのスポーツ復帰に<span>欧州の壁</span>", "lead": "ウクライナ侵攻で国際大会から締め出されたロシアの復帰を、IOCが7月に認めた。しかし欧州の一部の国が受け入れに抵抗し、法廷での争いに発展している。", "src": {"name": "ロイター", "date": "11月23日", "url": "https://www.usnews.com/news/world/articles/2026-11-23/russias-sports-comeback-hits-a-european-wall"}, "gist": "2028年ロサンゼルス五輪の予選が本格化する前に、ロシアの選手をどう扱うかで、スポーツ界と欧州各国の考えが割れている。", "detail": ["IOCは2022年2月のウクライナ侵攻後にロシアを除外したが、今年7月に資格停止を解いた。", "ロシア五輪委員会は、2月にルーマニアで開かれる冬季欧州ユース五輪の参加条件をめぐり、スポーツ仲裁裁判所に訴えた。", "欧州五輪委員会は、対立が2027年6月の欧州競技大会など、ロス五輪の重要な予選に影響しかねないと懸念している。"], "kw": ["7月", "ロサンゼルス五輪"], "views": [{"type": "当事者の声", "who": "スピロス・カプラロス", "role": "欧州五輪委員会 会長（ロイターの取材）", "stance": "欧州の分断", "text": "欧州はこの問題で割れている。政府がスポーツの自治を忘れることがあり、大きな問題だ。", "media": "ロイター", "url": "https://www.usnews.com/news/world/articles/2026-11-23/russias-sports-comeback-hits-a-european-wall"}]}
 ];
 
-const OTHERS = [{"cat": "world", "t": "ローマ教皇、1300人超の貧しい人たちとバチカンで昼食", "src": "AP通信", "date": "11月23日", "url": "https://sg.news.yahoo.com/ap-top-stories-november-23-102434201.html"}, {"cat": "world", "t": "英国人スイマーがホルムズ海峡を遠泳、「戦争をやめるべき」と訴え", "src": "NHK", "date": "11月23日", "url": "https://news.web.nhk/newsweb/pl/news-nwa-international-nationwide"}, {"cat": "world", "t": "スペインの世論調査、右派が過半数を得る勢い", "src": "ロイター", "date": "11月23日", "url": "https://www.usnews.com/news/world"}, {"cat": "world", "t": "ベルギー首相、予算協議に12月31日の期限を設定", "src": "ロイター", "date": "11月23日", "url": "https://www.usnews.com/news/world"}, {"cat": "world", "t": "韓国の大学入試、スマートグラス対策で混乱し教育相が辞意", "src": "NHK", "date": "11月22日", "url": "https://news.web.nhk/newsweb/pl/news-nwa-international-nationwide"}, {"cat": "world", "t": "ブラジル南部で猛烈な嵐、4人が死亡", "src": "Yahoo!ニュース", "date": "11月22日", "url": "https://news.yahoo.co.jp/pickup/6603590"}, {"cat": "world", "t": "台湾で伝統の「柿餅」づくりが最盛期", "src": "NHK", "date": "11月23日", "url": "https://news.web.nhk/newsweb/pl/news-nwa-international-nationwide"}, {"cat": "world", "t": "福島の大雪による孤立が解消、一部で停電続く", "src": "NHK", "date": "11月23日", "url": "https://news.web.nhk/newsweb"}, {"cat": "world", "t": "前橋の住宅街のクマ、水路に潜む可能性で警戒続く", "src": "NHK", "date": "11月23日", "url": "https://news.web.nhk/newsweb"}, {"cat": "tech", "t": "東京電力、福島の廃炉と賠償の部門を統合へ", "src": "NHK", "date": "11月23日", "url": "https://news.web.nhk/newsweb/pl/news-nwa-latest-nationwide"}, {"cat": "sports", "t": "オリックスが藤浪晋太郎投手を獲得", "src": "NHK", "date": "11月23日", "url": "https://news.web.nhk/newsweb"}, {"cat": "sports", "t": "ドジャース佐々木朗希投手、野球大会で子どもたちと交流", "src": "NHK", "date": "11月23日", "url": "https://news.web.nhk/newsweb/pl/news-nwa-latest-nationwide"}, {"cat": "sports", "t": "山下美夢有、米女子ツアーの年間最少平均ストローク賞を獲得", "src": "GDO", "date": "11月23日", "url": "https://news.golfdigest.co.jp/news/results/lpga/article/197487/1/"}];
+const OTHERS = [];
 const ORDER = [0,1,2,14,3,16,4,5,6,15,7,22,17,8,9,18,10,19,11,21,23,12,20,24,13];
 const $ = s => document.querySelector(s);
 const feed = $("#feed"), chips = $("#chips"), dotsEl = $("#dots");
@@ -458,7 +458,7 @@ function closing(){
         <li>出典は通信社と一次情報（AP、ロイター、NHK、政府や機関の発表など）。SNSの投稿だけの話題は載せない。</li>
         <li>物差しは「世界が動いたか」。政権・国境・市場が動くこと、大勢の暮らしに効くことを優先。炎上やゴシップは載せない。</li>
         <li>フックの強さでは選ばない。地味でも大事なニュースは見出しで届ける。</li>
-        <li>配分の目安は世界14・テック科学7・スポーツ4。解説付きは20〜25本で打ち止め。その下に、見出しと出典だけの「ほかのニュース」を並べる。</li>
+        <li>配分の目安は世界14・テック科学7・スポーツ4。総数は20〜25本で打ち止め。</li>
         <li>地域を分散させ、アメリカと日本に偏らない。</li>
         <li>明るい話題を最低2本入れる。</li>
       </ol>
