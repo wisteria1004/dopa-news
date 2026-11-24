@@ -153,7 +153,7 @@ footer{display:flex;align-items:center;gap:10px;padding:6px 14px calc(8px + var(
 <div class="dots" id="dots" aria-hidden="true"></div>
 <main class="feed" id="feed"></main>
 <footer>
-  <span class="pos" aria-live="polite"><span id="cur">1</span> <small>/ <span id="tot">25</span></small></span>
+  <span class="pos" aria-live="polite"><span id="cur">1</span> <small>/ <span id="tot">–</span></small></span>
   <button class="next" id="next" type="button"><span id="nextL">次のニュース</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="m5 9 7 7 7-7"/></svg></button>
 </footer>
 </div>
@@ -397,7 +397,7 @@ function closing(){
         <li>出典は通信社と一次情報（AP、ロイター、NHK、政府や機関の発表など）。SNSの投稿だけの話題は載せない。</li>
         <li>物差しは「世界が動いたか」。政権・国境・市場が動くこと、大勢の暮らしに効くことを優先。炎上やゴシップは載せない。</li>
         <li>フックの強さでは選ばない。地味でも大事なニュースは見出しで届ける。</li>
-        <li>配分の目安は世界8・テック科学5・スポーツ3。総数は16本で打ち止め。</li>
+        <li>配分の目安は世界55%・テック科学30%・スポーツ15%。今日は${NEWS.length}本（世界${c.world}・テック科学${c.tech}・スポーツ${c.sports}）。</li>
         <li>地域を分散させ、アメリカと日本に偏らない。</li>
         <li>明るい話題を最低2本入れる。</li>
       </ol>
