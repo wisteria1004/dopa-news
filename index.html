@@ -41,11 +41,12 @@ header{padding:calc(8px + var(--st)) 14px 6px;position:absolute;top:0;left:0;rig
 .how svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
 .how:hover{color:var(--ink)}
 .pill{white-space:nowrap;border:1px solid var(--line);background:#121018;border-radius:999px;padding:0 12px;min-height:32px;font-weight:900;font-size:12px}
-.chips{display:flex;gap:6px;overflow-x:auto;margin-top:7px;scrollbar-width:none}
+.chips{display:flex;gap:20px;overflow-x:auto;margin-top:2px;padding:0 2px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
-.chip{flex:none;border:1px solid var(--line);border-radius:999px;padding:0 13px;min-height:34px;font-weight:900;font-size:13px;color:#bdb5c3}
-.chip b{font:400 13px Anton,sans-serif;margin-left:5px}
-.chip[aria-pressed=true]{background:var(--ink);color:#121016;border-color:var(--ink)}
+.chip{flex:none;padding:0 1px;min-height:38px;font-weight:900;font-size:14px;color:var(--mute);border-bottom:2px solid transparent;transition:color .2s,border-color .25s}
+.chip:hover{color:var(--ink)}
+.chip b{font:400 13px Anton,sans-serif;margin-left:5px;color:var(--mute)}
+.chip[aria-pressed=true]{color:var(--ink);border-bottom-color:var(--a,var(--pink))}
 .dots{position:absolute;left:5px;top:52%;transform:translateY(-50%);display:flex;flex-direction:column;gap:7px;z-index:6;pointer-events:none}
 .dots i{width:5px;height:5px;border-radius:50%;background:#4a4452;transition:height .25s,background .25s}
 .dots i.on{height:18px;border-radius:3px;background:var(--ink)}
@@ -159,7 +160,7 @@ footer{display:flex;align-items:center;gap:10px;padding:6px 14px calc(8px + var(
 .snote{margin:0;padding:8px 0;font-size:14px;color:var(--mute)}
 .snote a{color:var(--ink);text-underline-offset:4px}
 .sall{display:inline-block;margin:6px 16px 0;font-size:14px;font-weight:900;color:var(--yel);text-underline-offset:4px}
-@media(prefers-reduced-motion:reduce){.live,.ring{animation:none}.prog i,.bars i,.dots i{transition:none}.feed,.track{scroll-behavior:auto}}
+@media(prefers-reduced-motion:reduce){.live,.ring{animation:none}.prog i,.bars i,.dots i,.chip{transition:none}.feed,.track{scroll-behavior:auto}}
 @media(max-width:400px){.top{gap:6px}.date,.pill{padding:0 9px}}
 @media(max-width:350px){.yr{display:none}}
 @media(max-width:380px){.pane{padding-left:22px;padding-right:66px}.hint{left:20px}}
@@ -405,11 +406,11 @@ function panes(n, no){
   P.push(`<div class="pane"><div class="in"><div class="tags"><span class="tag">${CAT[n.cat]}</span><span class="tag o">${esc(n.region)}</span><span class="tag o">全部で約${secs(n)}秒</span></div>
     <h2>${n.title}</h2><p class="lead">${T(color(n.lead, n.kw))}</p>
     <div class="src">出典：${link(esc(n.src.name), n.src.url)}・${esc(n.src.date)}</div>
-    <div class="go">横に流すと詳細 <span>→</span></div></div></div>`);
+    ${no === 0 ? '<div class="go">横に流すと詳細 <span>→</span></div>' : ""}</div></div>`);
   P.push(`<div class="pane"><div class="in"><div class="tags"><span class="tag y">ざっくり言うと</span></div><p class="big">${T(color(n.gist, n.kw))}</p></div></div>`);
   n.detail.forEach((d, k) => P.push(`<div class="pane"><div class="in"><div class="tags"><span class="tag">くわしい話 ${k+1}</span></div><p class="big xl">${T(color(d, n.kw))}</p>${k === n.detail.length-1 ? `<div class="src">出典：${link(esc(n.src.name), n.src.url)}（${esc(n.src.date)}）</div>` : ""}</div></div>`));
   n.views.forEach((v, k) => P.push(`<div class="pane"><div class="in"><div class="tags"><span class="tag w">${v.type === "専門家" ? "専門家の見解" : esc(v.type)} ${k+1} / ${n.views.length}</span><span class="tag o">${esc(v.stance)}</span></div>
-    <div class="who">${esc(v.who)}</div><div class="role">${esc(v.role)}</div><p class="big">要約：${T(esc(v.text))}</p>
+    <div class="who">${esc(v.who)}</div><div class="role">${esc(v.role)}</div><p class="big">${T(esc(v.text))}</p>
     <div class="src">出典：${link(esc(v.media), v.url)}</div>${k === n.views.length-1 ? `<p class="note">見解は発言や分析の要約です。「専門家の見解」は専門家本人、「当事者の声」は関係者・機関の説明、「分析・データ」は機関や媒体の分析です。${n.views.length < 2 ? "別の媒体で確認できた見解は1件だけのため、無理に増やしていません。" : ""}</p>` : ""}</div></div>`));
   return P;
 }
@@ -480,7 +481,7 @@ function render(){
     const n = NEWS[i], P = panes(n, k), key = plain(n.title);
     return `<section class="card" data-k="${k}" style="--a:${n.accent}" aria-label="${esc(key)}">
       <div class="blob"></div><div class="num" aria-hidden="true">${String(ORDER.indexOf(i)+1).padStart(2,"0")}</div>
-      <div class="hint">// 下へスワイプで次のニュース</div>
+      ${k === 0 ? '<div class="hint">// 下へスワイプで次のニュース</div>' : ""}
       <div class="track" tabindex="0" aria-label="横にスクロールで詳細">${P.join("")}</div>
       <div class="rail"><button class="like share" type="button" aria-label="この記事のリンクをコピー" data-share="${ORDER.indexOf(i)+1}"><svg viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg></button><button class="like" type="button" aria-label="いいね" aria-pressed="${liked.has(key)}" data-key="${esc(key)}"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button></div>
       <div class="bars" aria-hidden="true">${P.map((_, j) => `<i class="${j ? "" : "on"}"></i>`).join("")}</div>
@@ -501,6 +502,7 @@ function render(){
 
 function setCur(k){
   cur = k;
+  const hd = document.querySelector("header"); if (hd) hd.style.setProperty("--a", k < list.length ? NEWS[list[k]].accent : "#ffd60a");
   try { if (location.hash !== "#" + tag(k)) history.replaceState(null, "", "#" + tag(k)); } catch(e){}
   const atEnd = k >= list.length;
   $("#cur").textContent = Math.min(k + 1, list.length);
