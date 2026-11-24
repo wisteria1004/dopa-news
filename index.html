@@ -66,6 +66,8 @@ background:radial-gradient(85% 60% at 80% 8%,color-mix(in srgb,var(--a) 50%,tran
 .tag.y{background:var(--yel)}
 h2{font-weight:900;font-size:clamp(27px,7.8vw,40px);line-height:1.22;margin:0 0 18px;text-wrap:balance}
 h2 span,.k{color:var(--a)}
+.ph{display:inline-block}
+h2 .ph{color:inherit}
 .k{font-weight:900}
 .lead{font-size:16px;line-height:1.9;margin:0;border-left:3px solid rgba(255,255,255,.2);padding-left:14px}
 .big{font-weight:900;font-size:clamp(19px,5.2vw,23px);line-height:1.75;margin:0;letter-spacing:.02em}
@@ -413,6 +415,24 @@ function othersCard(){
     </div></div></div>
   </section>`;
 }
+
+/* 見出しの改行：文節（助詞・句読点のあと）でまとまりを作り、その途中では改行しない */
+const PHRASE = /([^、。！？」）]*?(?:から|まで|より|とは|では|には|へは|は|が|を|に|で|と|の|へ|も|や|、|。|！|？|」|）)(?=[^ぁ-んー、。！？」）]|$)|[^、。！？」）]+$)/g;
+const phrase = el => {
+  const runs = [...el.childNodes].map(n => [n.textContent, n.nodeType === 1]);
+  const text = runs.map(r => r[0]).join("");
+  const parts = text.split(/(?=「|（)/).flatMap(x => x.match(PHRASE) || [x]).filter(Boolean);
+  if (parts.join("") !== text) return;
+  const acc = []; for (const [t, a] of runs) for (const _ of t) acc.push(a);
+  el.textContent = ""; let k = 0;
+  for (const x of parts){
+    const ph = document.createElement("span"); ph.className = "ph";
+    let buf = "", cur = acc[k];
+    const flush = () => { if (!buf) return; if (cur){ const a = document.createElement("span"); a.textContent = buf; ph.appendChild(a); } else ph.appendChild(document.createTextNode(buf)); buf = ""; };
+    for (const ch of x){ if (acc[k] !== cur){ flush(); cur = acc[k]; } buf += ch; k++; }
+    flush(); el.appendChild(ph);
+  }
+};
 function render(){
   list = ORDER.filter(i => cat === "all" || NEWS[i].cat === cat);
   const counts = {all:NEWS.length}; NEWS.forEach(n => counts[n.cat] = (counts[n.cat]||0) + 1);
@@ -434,6 +454,7 @@ function render(){
     const j = Math.round(t.scrollLeft / t.clientWidth);
     t.parentElement.querySelectorAll(".bars i").forEach((b, x) => b.classList.toggle("on", x === j));
   }, {passive:true}));
+  feed.querySelectorAll("h2").forEach(phrase);
   feed.querySelectorAll(".card").forEach(c => io.observe(c));
   if (typeof markTall === "function") requestAnimationFrame(markTall);
 }
