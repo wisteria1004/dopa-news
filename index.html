@@ -55,7 +55,8 @@ background:radial-gradient(85% 60% at 80% 8%,color-mix(in srgb,var(--a) 50%,tran
 .num{position:absolute;right:-4px;top:-6px;font:400 clamp(150px,44vw,240px)/1 Anton,sans-serif;color:transparent;-webkit-text-stroke:2px rgba(255,255,255,.2);pointer-events:none}
 .track{flex:1;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none;position:relative;z-index:1}
 .track::-webkit-scrollbar{display:none}
-.pane{flex:0 0 100%;scroll-snap-align:start;scroll-snap-stop:always;padding:56px 84px 28px 34px;overflow-y:auto;display:flex;flex-direction:column}
+.pane{flex:0 0 100%;scroll-snap-align:start;scroll-snap-stop:always;padding:56px 84px 28px 34px;overflow-y:hidden;display:flex;flex-direction:column}
+.pane.tall{overflow-y:auto;overscroll-behavior-y:auto}
 .pane>.in{margin:auto 0}
 .hint{position:absolute;top:14px;left:34px;font-size:13px;letter-spacing:.2em;color:var(--mute);z-index:2}
 .tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
@@ -434,6 +435,7 @@ function render(){
     t.parentElement.querySelectorAll(".bars i").forEach((b, x) => b.classList.toggle("on", x === j));
   }, {passive:true}));
   feed.querySelectorAll(".card").forEach(c => io.observe(c));
+  if (typeof markTall === "function") requestAnimationFrame(markTall);
 }
 
 function setCur(k){
@@ -594,8 +596,14 @@ const openFromHash = () => {
   const k = list.indexOf(idx); if (k > -1) feed.children[k].scrollIntoView({behavior:"auto"});
 };
 addEventListener("hashchange", openFromHash);
+
+/* 縦スクロールの引っかかり対策：中身がはみ出すパネルだけ内側でスクロールさせる */
+const markTall = () => feed.querySelectorAll(".pane").forEach(p => p.classList.toggle("tall", p.scrollHeight > p.clientHeight + 4));
+addEventListener("resize", () => requestAnimationFrame(markTall));
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(markTall);
 render();
 openFromHash();
+markTall();
 }
 </script>
 </body>
