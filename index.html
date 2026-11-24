@@ -35,6 +35,8 @@ header{padding:calc(8px + var(--st)) 14px 6px;position:absolute;top:0;left:0;rig
 .date{display:flex;align-items:center;gap:6px;font-size:12px;letter-spacing:.06em;color:#d9d3dd;white-space:nowrap}
 .live{width:7px;height:7px;border-radius:50%;background:var(--lime);box-shadow:0 0 10px var(--lime);animation:pulse 1.8s infinite}
 @keyframes pulse{50%{opacity:.3}}
+.latest{display:inline-flex;align-items:center;text-decoration:none;color:var(--yel)}
+.latest[hidden]{display:none}
 .pill{border:1px solid var(--line);background:#121018;border-radius:999px;padding:0 12px;min-height:32px;font-weight:900;font-size:12px}
 .cnt{margin-left:auto;display:flex;align-items:baseline;gap:4px;border:1px solid var(--line);border-radius:999px;padding:2px 12px;font-size:12px;color:#cfc8d4;white-space:nowrap}
 .cnt b{font:400 19px/1 Anton,sans-serif;color:var(--lime)}
@@ -75,6 +77,7 @@ h2 .ph{color:inherit}
 .src{margin-top:16px;font-size:14px;color:var(--mute);display:flex;gap:10px 14px;flex-wrap:wrap}
 .src a{color:var(--ink);text-underline-offset:4px}
 .go{margin-top:16px;font-size:14px;color:var(--mute);letter-spacing:.12em}
+.backno{color:var(--ink);text-underline-offset:4px}
 .go span{color:var(--a)}
 .who{font-weight:900;font-size:21px;line-height:1.35}
 .role{color:var(--mute);font-size:14px;margin:2px 0 14px}
@@ -142,6 +145,7 @@ footer{display:flex;align-items:center;gap:10px;padding:6px 14px calc(8px + var(
   <div class="top">
     <span class="date"><span class="live" aria-hidden="true"></span><span id="today">2026.11.24 TUE</span></span>
     <button class="pill" id="how" type="button">選び方</button>
+    <a class="pill latest" id="latest" href="#" hidden>最新号へ</a>
     <span class="cnt"><b id="readN">0</b>本読んだ</span>
   </div>
   <div class="chips" id="chips" role="toolbar" aria-label="カテゴリ"></div>
@@ -158,6 +162,7 @@ footer{display:flex;align-items:center;gap:10px;padding:6px 14px calc(8px + var(
 <div class="toast" id="toast" role="status" hidden></div>
 <script>
 {
+const START_HASH = location.hash;
 /* ===== 今日号の記事データ（2026年11月24日号・24時間版）=====
    作業メモ：マリアナ海溝とフーシ派の記事は、別媒体で確認できた見解が1件のみ。 */
 const ISSUE = {date:"2026.11.24 TUE", range:"11月22〜23日"};
@@ -384,7 +389,7 @@ function closing(){
       <h2>${NEWS.length}本で、<span>世界がどう動いたか</span>をつかめた</h2>
       <div class="mix"><div><b>${c.world}</b><small>世界</small></div><div><b>${c.tech}</b><small>テック・科学</small></div><div><b>${c.sports}</b><small>スポーツ</small></div></div>
       <ul class="recap">${ORDER.map((i, k) => `<li><button type="button" data-jump="${i}"><b>${String(k+1).padStart(2,"0")}</b>${esc(plain(NEWS[i].title))}</button></li>`).join("")}</ul>
-      <p class="go">横に流すと選び方 <span>→</span></p></div></div>
+      <p class="go">横に流すと選び方 <span>→</span></p><p class="go"><a class="backno" href="archive/">過去の号を読む</a> <span>→</span></p></div></div>
     <div class="pane"><div class="in">
       <div class="tags"><span class="tag">ニュースの選び方</span></div>
       <ol>
@@ -455,6 +460,7 @@ function render(){
     t.parentElement.querySelectorAll(".bars i").forEach((b, x) => b.classList.toggle("on", x === j));
   }, {passive:true}));
   feed.querySelectorAll("h2").forEach(phrase);
+  if (typeof fixBackno === "function") fixBackno();
   feed.querySelectorAll(".card").forEach(c => io.observe(c));
   if (typeof markTall === "function") requestAnimationFrame(markTall);
 }
@@ -599,7 +605,10 @@ document.addEventListener("scroll", e => { if (!pop.contains(e.target)) closePop
 document.addEventListener("keydown", e => { if (e.key === "Escape") closePop(); });
 
 /* 共有リンク：記事ごとに #n01 のようなアドレスを付ける */
-const BASE = location.origin + location.pathname;
+const ARCHIVED = /\/archive\/\d{4}-\d{2}-\d{2}\/?/.test(location.pathname);
+const ROOT = ARCHIVED ? location.pathname.replace(/archive\/.*$/, "") : location.pathname.replace(/[^/]*$/, "");
+const DAY = ISSUE.date.slice(0, 10).replace(/\./g, "-");
+const BASE = location.origin + ROOT + "archive/" + DAY + "/";
 const tag = k => k > list.length || (k === list.length && !feed.querySelector(".others")) ? "matome" : k === list.length ? "others" : "n" + String(ORDER.indexOf(list[k]) + 1).padStart(2, "0");
 const toast = $("#toast"); let tt = 0;
 const say = (html, ms = 2200) => { toast.innerHTML = html; toast.hidden = false; clearTimeout(tt); tt = setTimeout(() => toast.hidden = true, ms); };
@@ -610,8 +619,8 @@ feed.addEventListener("click", async e => {
   try { await navigator.clipboard.writeText(url); say("この記事のリンクをコピーしました"); }
   catch (err) { say(`コピーできませんでした。長押しで選んでコピーしてください：<br>${esc(url)}`, 6000); }
 }, true);
-const openFromHash = () => {
-  const m = /^#n(\d{2})$/.exec(location.hash); if (!m) return;
+const openFromHash = h => {
+  const m = /^#n(\d{2})$/.exec(typeof h === "string" ? h : location.hash); if (!m) return;
   const idx = ORDER[+m[1] - 1]; if (idx === undefined) return;
   if (cat !== "all"){ cat = "all"; render(); }
   const k = list.indexOf(idx); if (k > -1) feed.children[k].scrollIntoView({behavior:"auto"});
@@ -627,8 +636,13 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(markTall);
 const barSize = () => { const r = document.documentElement.style; r.setProperty("--hh", document.querySelector("header").offsetHeight + "px"); r.setProperty("--fh", document.querySelector("footer").offsetHeight + "px"); };
 barSize(); addEventListener("resize", barSize);
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { barSize(); markTall(); });
+
+/* 過去号：アーカイブ内のページでは「最新号へ」を出し、リンク先をそろえる */
+if (ARCHIVED){ const l = $("#latest"); l.href = ROOT; l.hidden = false; }
+const fixBackno = () => feed.querySelectorAll(".backno").forEach(a => a.href = ROOT + "archive/");
 render();
-openFromHash();
+openFromHash(START_HASH);
+fixBackno();
 markTall();
 }
 </script>
