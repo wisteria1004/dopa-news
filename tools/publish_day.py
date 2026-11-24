@@ -3,7 +3,7 @@
 
 使い方（リポジトリの一番上で）:  python3 tools/publish_day.py
 - index.html の ISSUE.date から日付を読み、archive/YYYY-MM-DD/index.html にそのままコピーする。
-- archive/ 以下の全号から archive/index.html（過去号の一覧）を作り直す。
+- archive/ 以下の全号から archive/index.html（過去号の一覧）と archive/days.json（号の目録）を作り直す。
 """
 import html
 import json
@@ -44,9 +44,11 @@ def weekday(y, m, d):
 def build_list():
     days = sorted([d for d in os.listdir(ARCH) if re.fullmatch(r"\d{4}-\d{2}-\d{2}", d)
                    and os.path.exists(os.path.join(ARCH, d, "index.html"))], reverse=True)
-    items = []
+    items, catalog = [], []
     for d in days:
         it = read_issue(os.path.join(ARCH, d, "index.html"))
+        catalog.append(dict(date=d, wd=weekday(it["y"], it["m"], it["d"]), n=len(it["titles"]),
+                            top=it["titles"][0] if it["titles"] else ""))
         cnt = {k: it["cats"].count(k) for k in ("world", "tech", "sports")}
         tops = "".join(f"<li>{html.escape(t)}</li>" for t in it["titles"][:3])
         items.append(f'''<a class="day" href="{d}/">
@@ -92,6 +94,9 @@ ol li::marker{{color:var(--pink);font-family:Anton,sans-serif}}
 </html>
 '''
     open(os.path.join(ARCH, "index.html"), "w", encoding="utf-8").write(page)
+    # 号の目録（新しい順）。各号のページ上部の「号をえらぶ」パネルが読み込む
+    with open(os.path.join(ARCH, "days.json"), "w", encoding="utf-8") as f:
+        json.dump(catalog, f, ensure_ascii=False, separators=(",", ":"))
     return days
 
 
