@@ -167,6 +167,17 @@ footer{display:flex;align-items:center;gap:10px;padding:6px 14px calc(8px + var(
 .snote{margin:0;padding:8px 0;font-size:14px;color:var(--mute)}
 .snote a{color:var(--ink);text-underline-offset:4px}
 .sall{display:inline-block;margin:6px 16px 0;font-size:14px;font-weight:900;color:var(--yel);text-underline-offset:4px}
+.grab{width:40px;height:4px;border-radius:2px;background:#4a4452;margin:0 auto 10px}
+.shtitle{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--ink)}
+.shbtns{display:flex;flex-direction:column;gap:10px;padding:4px 16px 0}
+.shb{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;min-height:64px;padding:12px 16px;border:1px solid var(--line);border-radius:14px;background:#1b1822;text-align:left}
+.shb b{font-weight:900;font-size:17px}
+.shb small{font-size:13px;color:var(--mute)}
+.shb.main{background:var(--ink);color:#0b0a0e;border-color:var(--ink)}
+.shb.main small{color:#4a4452}
+.shc{align-self:center;min-height:44px;padding:0 12px;font-weight:900;font-size:14px;color:var(--mute);text-decoration:underline;text-underline-offset:4px}
+.sitebtn{display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:0 22px;margin:4px 0 18px;border-radius:999px;background:var(--ink);color:#0b0a0e;font-weight:900;font-size:16px}
+.sitebtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
 @media(prefers-reduced-motion:reduce){.live,.ring{animation:none}.prog i,.bars i,.dots i,.chip{transition:none}.feed,.track{scroll-behavior:auto}}
 @media(max-width:400px){.top{gap:6px}.date,.pill{padding:0 9px}}
 @media(max-width:350px){.yr{display:none}}
@@ -195,6 +206,18 @@ footer{display:flex;align-items:center;gap:10px;padding:6px 14px calc(8px + var(
 
 <div class="pop" id="pop" role="note" hidden></div>
 <div class="toast" id="toast" role="status" hidden></div>
+<div class="sheet" id="shareSheet" role="dialog" aria-modal="true" aria-labelledby="shareT" hidden>
+  <div class="panel">
+    <div class="grab" aria-hidden="true"></div>
+    <div class="shead"><b id="shareT">シェア</b><button class="pill" id="shX" type="button">閉じる</button></div>
+    <p class="snote0 shtitle" id="shareTitle"></p>
+    <div class="shbtns">
+      <button type="button" id="shArt" class="shb main"><b>この記事をシェア</b><small>見出し入りのカードで送る</small></button>
+      <button type="button" id="shSite" class="shb"><b>DOPEをシェア</b><small>サイトを紹介する</small></button>
+      <button type="button" id="shCopy" class="shc">記事のリンクをコピー</button>
+    </div>
+  </div>
+</div>
 <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetT" hidden>
   <div class="panel">
     <div class="shead"><b id="sheetT">号をえらぶ</b><button class="pill" id="sheetX" type="button">閉じる</button></div>
@@ -521,6 +544,7 @@ function closing(){
       <div class="tags"><span class="tag">今日はここまで</span></div>
       <h2>${NEWS.length}本で、<span>世界がどう動いたか</span>をつかめた</h2>
       <div class="mix"><div><b>${c.world}</b><small>世界</small></div><div><b>${c.tech}</b><small>テック・科学</small></div><div><b>${c.sports}</b><small>スポーツ</small></div></div>
+      <button class="sitebtn" type="button" data-share-site><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12"/><path d="m7 8 5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>DOPEをシェア</button>
       <ul class="recap">${ORDER.map((i, k) => `<li><button type="button" data-jump="${i}"><b>${String(k+1).padStart(2,"0")}</b>${esc(plain(NEWS[i].title))}</button></li>`).join("")}</ul>
       <p class="go">横に流すと選び方 <span>→</span></p><p class="go"><a class="backno" href="archive/">過去の号を読む</a> <span>→</span></p></div></div>
     <div class="pane"><div class="in">
@@ -581,7 +605,7 @@ function render(){
       <div class="blob"></div><div class="num" aria-hidden="true">${String(ORDER.indexOf(i)+1).padStart(2,"0")}</div>
       ${k === 0 ? '<div class="hint">// 下へスワイプで次のニュース</div>' : ""}
       <div class="track" tabindex="0" aria-label="横にスクロールで詳細">${P.join("")}</div>
-      <div class="rail"><button class="like share" type="button" aria-label="この記事のリンクをコピー" data-share="${ORDER.indexOf(i)+1}"><svg viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg></button><button class="like" type="button" aria-label="いいね" aria-pressed="${liked.has(key)}" data-key="${esc(key)}"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button></div>
+      <div class="rail"><button class="like share" type="button" aria-label="シェア" aria-haspopup="dialog" data-share="${ORDER.indexOf(i)+1}"><svg viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg></button><button class="like" type="button" aria-label="いいね" aria-pressed="${liked.has(key)}" data-key="${esc(key)}"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button></div>
       <div class="bars" aria-hidden="true">${P.map((_, j) => `<i class="${j ? "" : "on"}"></i>`).join("")}</div>
     </section>`;
   }).join("") + othersCard() + closing();
@@ -629,7 +653,7 @@ $("#next").addEventListener("click", () => go(cur >= feed.children.length - 1 ? 
 $("#how").addEventListener("click", () => { go(feed.children.length - 1); setTimeout(() => { const t = $("#end .track"); if (t) t.scrollTo({left: t.clientWidth, behavior:"smooth"}); }, 450); });
 document.addEventListener("keydown", e => {
   if (e.target.closest && e.target.closest("input,textarea")) return;
-  if (!document.getElementById("sheet").hidden) return;
+  if (!document.getElementById("sheet").hidden || !document.getElementById("shareSheet").hidden) return;
   if (e.key === "ArrowDown"){ e.preventDefault(); go(Math.min(cur + 1, feed.children.length - 1)); }
   if (e.key === "ArrowUp"){ e.preventDefault(); go(Math.max(cur - 1, 0)); }
   if (e.key === "ArrowRight"){ e.preventDefault(); side(1); }
@@ -751,14 +775,47 @@ const BASE = location.origin + ROOT + "archive/" + DAY + "/";
 const tag = k => k > list.length || (k === list.length && !feed.querySelector(".others")) ? "matome" : k === list.length ? "others" : "n" + String(ORDER.indexOf(list[k]) + 1).padStart(2, "0");
 const toast = $("#toast"); let tt = 0;
 const say = (html, ms = 2200) => { toast.innerHTML = html; toast.hidden = false; clearTimeout(tt); tt = setTimeout(() => toast.hidden = true, ms); };
-feed.addEventListener("click", async e => {
-  const b = e.target.closest("[data-share]"); if (!b) return;
-  e.stopPropagation();
-  /* 記事ごとの入口ページ（archive/日付/nXX/）を渡す。SNSのリンクカードにその記事の見出しと要約が出る */
-  const url = BASE + "n" + String(b.dataset.share).padStart(2, "0") + "/";
-  try { await navigator.clipboard.writeText(url); say("この記事のリンクをコピーしました"); }
+/* シェア：記事のリンクボタンでメニューを出し、記事かサイトかを選ぶ。
+   スマホは端末の共有メニュー（LINE・Xなど）を開き、それがない環境ではリンクをコピーする */
+const SITE_TITLE = "DOPE｜縦スクロールでニュースを読む。", SITE_URL = location.origin + ROOT;
+const artUrl = no => BASE + "n" + String(no).padStart(2, "0") + "/";
+const copyLink = async (url, msg) => {
+  try { await navigator.clipboard.writeText(url); say(msg); }
   catch (err) { say(`コピーできませんでした。長押しで選んでコピーしてください：<br>${esc(url)}`, 6000); }
+};
+const shareTo = async (title, url, msg) => {
+  if (navigator.share){ try { await navigator.share({title, url}); return; } catch (err){ if (err && err.name === "AbortError") return; } }
+  copyLink(url, msg);
+};
+const ssheet = $("#shareSheet"); let shareNo = 0, shareLast = null;
+const openShare = no => {
+  closePop(); shareNo = no; shareLast = document.activeElement;
+  const n = NEWS[ORDER[no - 1]]; $("#shareTitle").textContent = n ? plain(n.title) : "";
+  ssheet.hidden = false; $("#shArt").focus({preventScroll:true});
+};
+const closeShare = () => { if (ssheet.hidden) return; ssheet.hidden = true; if (shareLast && shareLast.focus) shareLast.focus({preventScroll:true}); };
+feed.addEventListener("click", e => {
+  const b = e.target.closest("[data-share]");
+  if (b){ e.stopPropagation(); openShare(+b.dataset.share); return; }
+  if (e.target.closest("[data-share-site]")){ e.stopPropagation(); shareTo(SITE_TITLE, SITE_URL, "DOPEのリンクをコピーしました"); }
 }, true);
+$("#shArt").onclick = () => { const n = NEWS[ORDER[shareNo - 1]]; closeShare(); shareTo(n ? plain(n.title) + "｜DOPE" : SITE_TITLE, artUrl(shareNo), "この記事のリンクをコピーしました"); };
+$("#shSite").onclick = () => { closeShare(); shareTo(SITE_TITLE, SITE_URL, "DOPEのリンクをコピーしました"); };
+$("#shCopy").onclick = () => { closeShare(); copyLink(artUrl(shareNo), "この記事のリンクをコピーしました"); };
+$("#shX").onclick = closeShare;
+ssheet.addEventListener("click", e => { if (e.target === ssheet) closeShare(); });
+ssheet.addEventListener("keydown", e => {
+  if (e.key === "Escape"){ e.stopPropagation(); closeShare(); return; }
+  if (e.key !== "Tab") return;
+  const f = [...ssheet.querySelectorAll("button")]; const i = f.indexOf(document.activeElement);
+  if (e.shiftKey && i <= 0){ e.preventDefault(); f[f.length - 1].focus(); }
+  else if (!e.shiftKey && i === f.length - 1){ e.preventDefault(); f[0].focus(); }
+});
+{ /* 下へスワイプで閉じる */
+  const sp = ssheet.querySelector(".panel"); let sy = null;
+  sp.addEventListener("touchstart", e => { sy = e.touches[0].clientY; }, {passive:true});
+  sp.addEventListener("touchmove", e => { if (sy !== null && e.touches[0].clientY - sy > 60){ sy = null; closeShare(); } }, {passive:true});
+}
 const openFromHash = h => {
   const m = /^#n(\d{2})$/.exec(typeof h === "string" ? h : location.hash); if (!m) return;
   const idx = ORDER[+m[1] - 1]; if (idx === undefined) return;
