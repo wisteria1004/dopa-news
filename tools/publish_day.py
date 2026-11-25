@@ -167,6 +167,7 @@ ol li::marker{{color:var(--pink);font-family:Anton,sans-serif}}
   <p class="lead">日付を押すと、その日の号がそのまま読めます。各号の記事は公開時点の内容です。</p>
   {"".join(items) if items else '<p class="empty">まだ過去の号はありません。</p>'}
 </main>
+<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{{"token": "1fb427c6ee564f8a877b85efc6f19219"}}'></script>
 </body>
 </html>
 '''
