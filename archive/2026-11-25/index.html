@@ -105,7 +105,8 @@ h2 .ph{color:inherit}
 .recap{list-style:none;margin:0;padding:0;display:grid;gap:6px}
 .recap button{width:100%;text-align:left;min-height:44px;padding:8px 0;border-top:1px solid var(--line);font-size:15px;display:flex;gap:10px}
 .recap button b{font:400 18px Anton,sans-serif;color:var(--mute);width:2em;flex:none}
-.g{font:inherit;color:inherit;padding:0;border-bottom:1.5px dotted rgba(245,243,238,.55);cursor:help;line-height:inherit}
+/* 用語は普通の文字と同じように途中で折り返せるよう、ボタンではなくインライン要素にしている */
+.g{display:inline;font:inherit;color:inherit;text-decoration:none;padding:0;border-bottom:1.5px dotted rgba(245,243,238,.55);cursor:help;line-height:inherit;-webkit-box-decoration-break:clone;box-decoration-break:clone}
 .g[aria-expanded=true]{border-bottom-style:solid;border-color:var(--yel)}
 .pop{position:fixed;z-index:20;max-width:min(280px,calc(100vw - 32px));background:#1b1822;border:1px solid #4a4452;border-radius:12px;padding:12px 14px;box-shadow:0 12px 32px rgba(0,0,0,.55);font-size:15px;line-height:1.65;font-weight:500}
 .pop b{display:block;font-weight:900;font-size:15px;color:var(--yel);margin-bottom:2px}
@@ -480,14 +481,14 @@ const gloss = (html, used) => {
     const e = esc(t); let i = html.indexOf(e);
     while (i > -1){
       const inTag = html.lastIndexOf("<", i) > html.lastIndexOf(">", i);
-      const inBtn = html.lastIndexOf("<button", i) > html.lastIndexOf("</button>", i);
+      const inBtn = html.lastIndexOf("<a class=\"g\"", i) > html.lastIndexOf("</a>", i);
       const kataBad = KATA.test(t) && (KCH.test(html[i - 1] || "") || KCH.test(html[i + e.length] || ""));
       if (!inTag && !inBtn && !kataBad && !inLonger(html, i, t, e)) break;
       i = html.indexOf(e, i + 1);
     }
     if (i < 0) continue;
     used.add(t);
-    html = html.slice(0, i) + `<button type="button" class="g" data-g="${e}" aria-expanded="false">${e}</button>` + html.slice(i + e.length);
+    html = html.slice(0, i) + `<a class="g" role="button" tabindex="0" data-g="${e}" aria-expanded="false">${e}</a>` + html.slice(i + e.length);
   }
   return html;
 };
@@ -730,7 +731,11 @@ document.addEventListener("click", e => {
   pop.style.top = Math.max(8, Math.min(below ? r.bottom + 10 : r.top - h - 10, innerHeight - h - 8)) + "px";
 }, true);
 document.addEventListener("scroll", e => { if (!pop.contains(e.target)) closePop(); }, true);
-document.addEventListener("keydown", e => { if (e.key === "Escape") closePop(); });
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") closePop();
+  const g = e.target.closest && e.target.closest(".g");
+  if (g && (e.key === "Enter" || e.key === " ")){ e.preventDefault(); g.click(); }
+});
 
 /* 共有リンク：記事ごとに #n01 のようなアドレスを付ける */
 const ARCHIVED = /\/archive\/\d{4}-\d{2}-\d{2}\/?/.test(location.pathname);
