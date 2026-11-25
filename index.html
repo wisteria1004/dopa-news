@@ -15,6 +15,14 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#08080d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="DOPE">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap" rel="stylesheet">
@@ -177,6 +185,12 @@ footer{display:flex;align-items:center;gap:10px;padding:6px 14px calc(8px + var(
 .shb.main small{color:#4a4452}
 .shc{align-self:center;min-height:44px;padding:0 12px;font-weight:900;font-size:14px;color:var(--mute);text-decoration:underline;text-underline-offset:4px}
 .sitebtn{display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:0 22px;margin:4px 0 18px;border-radius:999px;background:var(--ink);color:#0b0a0e;font-weight:900;font-size:16px}
+.btnrow{display:flex;flex-wrap:wrap;gap:10px;margin:4px 0 18px}
+.btnrow .sitebtn{margin:0}
+.sitebtn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.steps{margin:4px 16px 0;padding-left:1.4em;font-size:16px;line-height:1.7}
+.steps li{margin:6px 0}
+.steps b{font-weight:900}
 .sitebtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
 @media(prefers-reduced-motion:reduce){.live,.ring{animation:none}.prog i,.bars i,.dots i,.chip{transition:none}.feed,.track{scroll-behavior:auto}}
 @media(max-width:400px){.top{gap:6px}.date,.pill{padding:0 9px}}
@@ -206,6 +220,14 @@ footer{display:flex;align-items:center;gap:10px;padding:6px 14px calc(8px + var(
 
 <div class="pop" id="pop" role="note" hidden></div>
 <div class="toast" id="toast" role="status" hidden></div>
+<div class="sheet" id="appSheet" role="dialog" aria-modal="true" aria-labelledby="appT" hidden>
+  <div class="panel">
+    <div class="grab" aria-hidden="true"></div>
+    <div class="shead"><b id="appT">ホーム画面に追加</b><button class="pill" id="appX" type="button">閉じる</button></div>
+    <p class="snote0">アプリのように、ホーム画面のアイコンから全画面で開けます。一度開いた号は、電波が弱い所でも読めます。</p>
+    <ol class="steps" id="appSteps"></ol>
+  </div>
+</div>
 <div class="sheet" id="shareSheet" role="dialog" aria-modal="true" aria-labelledby="shareT" hidden>
   <div class="panel">
     <div class="grab" aria-hidden="true"></div>
@@ -682,7 +704,7 @@ function closing(){
       <div class="tags"><span class="tag">今日はここまで</span></div>
       <h2>${NEWS.length}本で、<span>世界がどう動いたか</span>をつかめた</h2>
       <div class="mix"><div><b>${c.world}</b><small>世界</small></div><div><b>${c.tech}</b><small>テック・科学</small></div><div><b>${c.sports}</b><small>スポーツ</small></div></div>
-      <button class="sitebtn" type="button" data-share-site><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12"/><path d="m7 8 5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>DOPEをシェア</button>
+      <div class="btnrow"><button class="sitebtn" type="button" data-share-site><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12"/><path d="m7 8 5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>DOPEをシェア</button>${STANDALONE ? "" : `<button class="sitebtn ghost" type="button" data-install>ホーム画面に追加</button>`}</div>
       <ul class="recap">${ORDER.map((i, k) => `<li><button type="button" data-jump="${i}"><b>${String(k+1).padStart(2,"0")}</b>${esc(plain(NEWS[i].title))}</button></li>`).join("")}</ul>
       <p class="go">横に流すと選び方 <span>→</span></p><p class="go"><a class="backno" href="archive/">過去の号を読む</a> <span>→</span></p></div></div>
     <div class="pane"><div class="in">
@@ -747,6 +769,8 @@ const phrase = el => {
     flush(); el.appendChild(ph);
   }
 };
+/* アプリとして（ホーム画面から）開いているか */
+const STANDALONE = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
 /* 見出しを少し（最大8%）小さくすれば1行減るなら、小さくする。
    例：「NVIDIA、辞任した／フアン氏を／CEOに戻す」の3行を、2行に収める */
 const headLines = h => Math.round(h.getBoundingClientRect().height / parseFloat(getComputedStyle(h).lineHeight));
@@ -824,7 +848,7 @@ $("#next").addEventListener("click", () => go(cur >= feed.children.length - 1 ? 
 $("#how").addEventListener("click", () => { go(feed.children.length - 1); setTimeout(() => { const t = $("#end .track"); if (t) t.scrollTo({left: t.clientWidth, behavior:"smooth"}); }, 450); });
 document.addEventListener("keydown", e => {
   if (e.target.closest && e.target.closest("input,textarea")) return;
-  if (!document.getElementById("sheet").hidden || !document.getElementById("shareSheet").hidden) return;
+  if (!document.getElementById("sheet").hidden || !document.getElementById("shareSheet").hidden || !document.getElementById("appSheet").hidden) return;
   if (e.key === "ArrowDown"){ e.preventDefault(); go(Math.min(cur + 1, feed.children.length - 1)); }
   if (e.key === "ArrowUp"){ e.preventDefault(); go(Math.max(cur - 1, 0)); }
   if (e.key === "ArrowRight"){ e.preventDefault(); side(1); }
@@ -988,6 +1012,31 @@ ssheet.addEventListener("keydown", e => {
   sp.addEventListener("touchstart", e => { sy = e.touches[0].clientY; }, {passive:true});
   sp.addEventListener("touchmove", e => { if (sy !== null && e.touches[0].clientY - sy > 60){ sy = null; closeShare(); } }, {passive:true});
 }
+/* ホーム画面に追加（アプリとして使う）。Android等はブラウザの追加画面を出し、iPhoneは手順を案内する */
+let installEvt = null;
+addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; });
+const asheet = $("#appSheet"); let appLast = null;
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const openAppSheet = () => {
+  closePop(); appLast = document.activeElement;
+  $("#appSteps").innerHTML = isIOS
+    ? '<li>画面下（または上）の<b>共有ボタン</b>（四角から上向きの矢印）を押す</li><li>メニューを下へたどって<b>「ホーム画面に追加」</b>を押す</li><li>右上の<b>「追加」</b>を押すと、ホーム画面にDOPEのアイコンが出ます</li>'
+    : '<li>ブラウザの<b>メニュー</b>（︙ や … のボタン）を開く</li><li><b>「ホーム画面に追加」</b>または<b>「アプリをインストール」</b>を押す</li><li>確認が出たら<b>「追加」</b>（または「インストール」）を押す</li>';
+  asheet.hidden = false; $("#appX").focus({preventScroll:true});
+};
+const closeAppSheet = () => { if (asheet.hidden) return; asheet.hidden = true; if (appLast && appLast.focus) appLast.focus({preventScroll:true}); };
+feed.addEventListener("click", async e => {
+  if (!e.target.closest("[data-install]")) return;
+  e.stopPropagation();
+  if (installEvt){ try { await installEvt.prompt(); await installEvt.userChoice; installEvt = null; return; } catch (err) { installEvt = null; } }
+  openAppSheet();
+}, true);
+$("#appX").onclick = closeAppSheet;
+asheet.addEventListener("click", e => { if (e.target === asheet) closeAppSheet(); });
+asheet.addEventListener("keydown", e => { if (e.key === "Escape"){ e.stopPropagation(); closeAppSheet(); } });
+/* オフライン対応（https のときだけ） */
+if ("serviceWorker" in navigator && location.protocol === "https:") addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
+
 const openFromHash = h => {
   const m = /^#n(\d{2})$/.exec(typeof h === "string" ? h : location.hash); if (!m) return;
   const idx = ORDER[+m[1] - 1]; if (idx === undefined) return;
