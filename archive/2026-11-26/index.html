@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DOPE｜縦スクロールでニュースを読む。</title>
+<meta name="description" content="DOPE｜縦スクロールでニュースを読む。縦で次のニュース、横でくわしく。毎朝更新。">
+<meta property="og:title" content="DOPE｜縦スクロールでニュースを読む。">
+<meta property="og:description" content="縦で次のニュース、横でくわしく。毎朝更新。">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="DOPE">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:url" content="https://wisteria1004.github.io/dopa-news/archive/2026-11-26/">
+<meta property="og:image" content="https://wisteria1004.github.io/dopa-news/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#08080d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="DOPE">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+/* VOICE: 刺激は強いけど中身は本物。速く掴めて、その場で深掘りできる
+   IDEA: ショート動画のフィード。縦で次の話題、横でそのニュースの奥へ
+   PICTURE: 記事ごとのアクセント色の光とぼかした塊、ハーフトーン、巨大なアウトライン番号
+   COLOUR and TYPE: #08080d の黒地に記事ごとの1色。Zen Kaku Gothic New 900 + Anton
+   LAYOUT: 上に虹色の進捗と日付、左にドット列、中央に1枚、下に位置と「次のニュース」 */
+:root{color-scheme:dark;--bg:#08080d;--ink:#f5f3ee;--mute:#a39da8;--line:#34303b;
+--pink:#ff2e88;--yel:#ffd60a;--org:#ff6b1a;--blue:#2e7bff;--lime:#b6ff2e;--pur:#8b5cff;--cyan:#19e3ff;
+--st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;min-width:0}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:500 16px/1.7 "Zen Kaku Gothic New",system-ui,sans-serif;overflow:hidden;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;cursor:pointer;background:none;border:0}
+button:focus-visible,a:focus-visible,.track:focus-visible{outline:2px solid var(--yel);outline-offset:3px}
+a{color:inherit}
+.prog{position:fixed;top:0;left:0;right:0;height:4px;z-index:9;background:#1a1720}
+.prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--pink),var(--org),var(--yel),var(--lime),var(--cyan),var(--blue),var(--pur));transition:width .35s}
+.app{height:100dvh;display:flex;flex-direction:column;max-width:620px;margin:0 auto;position:relative}
+header{padding:calc(8px + var(--st)) 14px 6px;position:absolute;top:0;left:0;right:0;z-index:5;background:rgba(8,8,13,.38);-webkit-backdrop-filter:blur(16px) saturate(1.4);backdrop-filter:blur(16px) saturate(1.4);border-bottom:1px solid rgba(255,255,255,.07)}
+.top{display:flex;align-items:center;gap:8px}
+.date{display:flex;align-items:center;gap:6px;font-size:12px;letter-spacing:.06em;color:#d9d3dd;white-space:nowrap}
+.live{width:7px;height:7px;border-radius:50%;background:var(--lime);box-shadow:0 0 10px var(--lime);animation:pulse 1.8s infinite}
+@keyframes pulse{50%{opacity:.3}}
+.latest{display:inline-flex;align-items:center;text-decoration:none;color:var(--yel)}
+.latest[hidden]{display:none}
+.how{margin-left:auto;display:inline-flex;align-items:center;gap:5px;min-height:40px;margin-block:-4px;padding:0 4px 0 8px;color:var(--mute);font-weight:900;font-size:12px;white-space:nowrap}
+.how svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.how:hover{color:var(--ink)}
+.pill{white-space:nowrap;border:1px solid var(--line);background:#121018;border-radius:999px;padding:0 12px;min-height:32px;font-weight:900;font-size:12px}
+.chips{display:flex;gap:20px;overflow-x:auto;margin-top:2px;padding:0 2px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;padding:0 1px;min-height:38px;font-weight:900;font-size:14px;color:var(--mute);border-bottom:2px solid transparent;transition:color .2s,border-color .25s}
+.chip:hover{color:var(--ink)}
+.chip b{font:400 13px Anton,sans-serif;margin-left:5px;color:var(--mute)}
+.chip[aria-pressed=true]{color:var(--ink);border-bottom-color:var(--a,var(--pink))}
+.dots{position:absolute;left:5px;top:52%;transform:translateY(-50%);display:flex;flex-direction:column;gap:7px;z-index:6;pointer-events:none}
+.dots i{width:5px;height:5px;border-radius:50%;background:#4a4452;transition:height .25s,background .25s}
+.dots i.on{height:18px;border-radius:3px;background:var(--ink)}
+.feed{flex:1;height:100%;overflow-y:auto;scroll-snap-type:y mandatory;overscroll-behavior-y:contain;scrollbar-width:none}
+.feed::-webkit-scrollbar{display:none}
+.card{height:100%;scroll-snap-align:start;scroll-snap-stop:always;position:relative;overflow:hidden;display:flex;flex-direction:column;padding-top:var(--hh,90px);padding-bottom:var(--fh,56px);
+background:radial-gradient(85% 60% at 80% 8%,color-mix(in srgb,var(--a) 50%,transparent),transparent 70%),radial-gradient(70% 50% at 0% 100%,color-mix(in srgb,var(--a) 22%,transparent),transparent 70%),var(--bg)}
+.card::before{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.09) 1px,transparent 1.4px);background-size:14px 14px;-webkit-mask:linear-gradient(180deg,transparent,#000 35%,#000 70%,transparent);mask:linear-gradient(180deg,transparent,#000 35%,#000 70%,transparent);pointer-events:none}
+.blob{position:absolute;width:62vw;max-width:340px;aspect-ratio:1;border-radius:50%;background:var(--a);filter:blur(70px);opacity:.28;right:-18%;top:30%;pointer-events:none}
+.num{position:absolute;right:-4px;top:calc(var(--hh,90px) - 10px);font:400 clamp(150px,44vw,240px)/1 Anton,sans-serif;color:transparent;-webkit-text-stroke:2px rgba(255,255,255,.2);pointer-events:none}
+.track{flex:1;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none;position:relative;z-index:1}
+.track::-webkit-scrollbar{display:none}
+.pane{flex:0 0 100%;scroll-snap-align:start;scroll-snap-stop:always;padding:48px 70px 24px 26px;overflow-y:hidden;display:flex;flex-direction:column}
+.pane.tall{overflow-y:auto;overscroll-behavior-y:auto}
+.pane>.in{margin:auto 0}
+.hint{position:absolute;top:calc(var(--hh,90px) + 12px);left:26px;font-size:13px;letter-spacing:.2em;color:var(--mute);z-index:2}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.tag{font-weight:900;font-size:13px;padding:4px 12px;border-radius:6px;background:var(--a);color:#0b0a0e;letter-spacing:.08em}
+.tag.o{background:transparent;border:1px solid #6b6372;color:var(--ink)}
+.tag.w{background:var(--ink)}
+.tag.y{background:var(--yel)}
+h2{font-weight:900;font-size:clamp(27px,7.8vw,40px);line-height:1.22;margin:0 0 18px;text-wrap:balance}
+h2 span,.k{color:var(--a)}
+.ph{display:inline-block}
+h2 .ph{color:inherit}
+.k{font-weight:900}
+.lead{font-size:16px;line-height:1.9;margin:0;border-left:3px solid rgba(255,255,255,.2);padding-left:14px}
+.big{font-weight:900;font-size:clamp(19px,5.2vw,23px);line-height:1.75;margin:0;letter-spacing:.02em}
+.big.xl{font-size:clamp(20px,5.6vw,25px);line-height:1.75;letter-spacing:.02em}
+.src{margin-top:16px;font-size:14px;color:var(--mute);display:flex;gap:10px 14px;flex-wrap:wrap}
+.src a{color:var(--ink);text-underline-offset:4px}
+.go{margin-top:16px;font-size:14px;color:var(--mute);letter-spacing:.12em}
+.backno{color:var(--ink);text-underline-offset:4px}
+.go span{color:var(--a)}
+.who{font-weight:900;font-size:21px;line-height:1.35}
+.role{color:var(--mute);font-size:14px;margin:2px 0 14px}
+.note{margin-top:14px;font-size:13px;color:var(--mute);line-height:1.7}
+.slist{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.slist li{border-top:1px solid var(--line);padding-top:10px;font-size:15px}
+.slist small{display:block;color:var(--mute);font-size:13px}
+.rail{position:absolute;right:12px;bottom:calc(var(--fh,56px) + 46px);z-index:3}
+.like{width:48px;height:48px;border-radius:50%;border:1px solid var(--line);background:rgba(18,16,24,.75);display:grid;place-items:center}
+.like svg{width:22px;height:22px;fill:none;stroke:var(--ink);stroke-width:2}
+.like[aria-pressed=true] svg{fill:var(--pink);stroke:var(--pink)}
+.bars{display:flex;gap:5px;padding:0 26px 12px;position:relative;z-index:1}
+.bars i{height:4px;width:20px;border-radius:2px;background:#3b3542;transition:width .25s,background .25s}
+.bars i.on{width:34px;background:var(--a)}
+.end .pane{padding-right:34px}
+.end h2{font-size:clamp(28px,8vw,40px)}
+.end ol{margin:0 0 6px;padding-left:1.3em;display:grid;gap:8px}
+.end li{font-size:16px;line-height:1.7}
+.mix{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:14px 0}
+.mix div{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.mix b{display:block;font:400 34px/1 Anton,sans-serif}
+.mix small{color:var(--mute);font-size:13px}
+.recap{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.recap button{width:100%;text-align:left;min-height:44px;padding:8px 0;border-top:1px solid var(--line);font-size:15px;display:flex;gap:10px}
+.recap button b{font:400 18px Anton,sans-serif;color:var(--mute);width:2em;flex:none}
+/* 用語は普通の文字と同じように途中で折り返せるよう、ボタンではなくインライン要素にしている */
+.g{display:inline;font:inherit;color:inherit;text-decoration:none;padding:0;border-bottom:1.5px dotted rgba(245,243,238,.55);cursor:help;line-height:inherit;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.g[aria-expanded=true]{border-bottom-style:solid;border-color:var(--yel)}
+.pop{position:fixed;z-index:20;max-width:min(280px,calc(100vw - 32px));background:#1b1822;border:1px solid #4a4452;border-radius:12px;padding:12px 14px;box-shadow:0 12px 32px rgba(0,0,0,.55);font-size:15px;line-height:1.65;font-weight:500}
+.pop b{display:block;font-weight:900;font-size:15px;color:var(--yel);margin-bottom:2px}
+.pop[hidden]{display:none}
+.pop.wide{width:min(320px,calc(100vw - 24px));max-width:none}
+.mapbox{position:relative;margin-top:10px;border-radius:10px;overflow:hidden;background:#0d1320;border:1px solid #2e3442}
+.mapbox svg{display:block;width:100%;height:180px;touch-action:none;cursor:grab}
+.mapbox svg:active{cursor:grabbing}
+.zoom{position:absolute;right:6px;top:6px;display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.zoom button{width:34px;height:34px;border-radius:8px;background:rgba(27,24,34,.9);border:1px solid #4a4452;font-weight:900;font-size:18px;line-height:1}
+.zoom button.s{font-size:11px;width:auto;padding:0 6px;white-space:nowrap}
+.maphint{font-size:12px;color:var(--mute);margin-top:6px}
+.pop small{display:inline-block;font-size:12px;font-weight:900;color:#0b0a0e;background:var(--lime);border-radius:4px;padding:0 6px;margin-bottom:4px}
+.ring{animation:ring 2s ease-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes ring{from{transform:scale(.4);opacity:.9}to{transform:scale(2.2);opacity:0}}
+.rail{display:flex;flex-direction:column;gap:10px}
+.share svg{fill:none}
+.toast{position:fixed;left:50%;bottom:calc(88px + var(--sb));transform:translateX(-50%);z-index:30;background:#1b1822;border:1px solid #4a4452;border-radius:12px;padding:10px 14px;font-size:14px;max-width:calc(100vw - 32px);overflow-wrap:anywhere}
+.toast[hidden]{display:none}
+.others .pane{padding-right:26px;justify-content:flex-start}
+.olist{list-style:none;margin:0;padding:0}
+.olist li{border-top:1px solid var(--line);padding:11px 0;display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 10px;align-items:baseline}
+.olist i{font-style:normal;font-size:12px;font-weight:900;color:#0b0a0e;background:var(--c);border-radius:4px;padding:1px 6px;white-space:nowrap}
+.olist b{font-weight:700;font-size:16px;line-height:1.55}
+.olist small{grid-column:2;color:var(--mute);font-size:13px}
+.olist a{color:var(--ink);text-underline-offset:3px}
+footer{display:flex;align-items:center;gap:10px;padding:6px 14px calc(8px + var(--sb));position:absolute;bottom:0;left:0;right:0;z-index:5;background:rgba(8,8,13,.38);-webkit-backdrop-filter:blur(16px) saturate(1.4);backdrop-filter:blur(16px) saturate(1.4);border-top:1px solid rgba(255,255,255,.07)}
+.pos{font:400 22px/1 Anton,sans-serif}.pos small{font-size:15px;color:var(--mute)}
+.next{margin-left:auto;border-radius:999px;padding:0 18px;height:42px;font-weight:900;font-size:14px;color:#1a1206;background:linear-gradient(90deg,var(--yel),var(--org));box-shadow:0 0 18px rgba(255,150,20,.3);display:flex;align-items:center;gap:6px}
+.date{min-height:32px;padding:0 9px 0 10px;border:1px solid var(--line);border-radius:999px;background:#121018}
+.date svg{width:13px;height:13px;fill:none;stroke:var(--mute);stroke-width:3}
+.date[aria-expanded=true]{border-color:var(--yel)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.sheet{position:fixed;inset:0;z-index:25;background:rgba(4,4,8,.6);display:flex;align-items:flex-end;justify-content:center}
+.sheet[hidden]{display:none}
+.panel{width:100%;max-width:620px;background:#15131b;border:1px solid var(--line);border-bottom:0;border-radius:18px 18px 0 0;padding:14px 0 calc(16px + var(--sb));box-shadow:0 -12px 40px rgba(0,0,0,.5)}
+.shead{display:flex;align-items:center;justify-content:space-between;padding:0 16px}
+.shead b{font-weight:900;font-size:18px}
+.snote0{margin:2px 16px 10px;font-size:13px;color:var(--mute)}
+.strip{position:relative;display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x proximity;overscroll-behavior-x:contain;padding:4px 16px 8px;scrollbar-width:none}
+.strip::-webkit-scrollbar{display:none}
+.day{flex:0 0 150px;scroll-snap-align:start;scroll-margin-left:16px;display:flex;flex-direction:column;gap:5px;min-height:150px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#1b1822;text-decoration:none;color:var(--ink)}
+.day.here{border-color:var(--yel);box-shadow:inset 0 0 0 1px var(--yel)}
+.dtop{display:flex;align-items:baseline;gap:6px}
+.dtop b{font:400 28px/1 Anton,sans-serif}
+.dtop small{color:var(--mute);font-size:13px;font-weight:900}
+.badges{display:flex;gap:4px;min-height:19px}
+.badges i{font-style:normal;font-size:11px;font-weight:900;border-radius:4px;padding:1px 6px;color:#0b0a0e;background:var(--lime)}
+.badges i.now{background:var(--yel)}
+.dn{font-size:12px;color:var(--mute)}
+.dt{font-size:14px;line-height:1.5;font-weight:700;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.snote{margin:0;padding:8px 0;font-size:14px;color:var(--mute)}
+.snote a{color:var(--ink);text-underline-offset:4px}
+.sall{display:inline-block;margin:6px 16px 0;font-size:14px;font-weight:900;color:var(--yel);text-underline-offset:4px}
+.grab{width:40px;height:4px;border-radius:2px;background:#4a4452;margin:0 auto 10px}
+.shtitle{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--ink)}
+.shbtns{display:flex;flex-direction:column;gap:10px;padding:4px 16px 0}
+.shb{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;min-height:64px;padding:12px 16px;border:1px solid var(--line);border-radius:14px;background:#1b1822;text-align:left}
+.shb b{font-weight:900;font-size:17px}
+.shb small{font-size:13px;color:var(--mute)}
+.shb.main{background:var(--ink);color:#0b0a0e;border-color:var(--ink)}
+.shb.main small{color:#4a4452}
+.shc{align-self:center;min-height:44px;padding:0 12px;font-weight:900;font-size:14px;color:var(--mute);text-decoration:underline;text-underline-offset:4px}
+.sitebtn{display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:0 22px;margin:4px 0 18px;border-radius:999px;background:var(--ink);color:#0b0a0e;font-weight:900;font-size:16px}
+.btnrow{display:flex;flex-wrap:wrap;gap:10px;margin:4px 0 18px}
+.btnrow .sitebtn{margin:0}
+.sitebtn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.steps{margin:4px 16px 0;padding-left:1.4em;font-size:16px;line-height:1.7}
+.steps li{margin:6px 0}
+.steps b{font-weight:900}
+.sitebtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+@media(prefers-reduced-motion:reduce){.live,.ring{animation:none}.prog i,.bars i,.dots i,.chip{transition:none}.feed,.track{scroll-behavior:auto}}
+@media(max-width:400px){.top{gap:6px}.date,.pill{padding:0 9px}}
+@media(max-width:350px){.yr{display:none}}
+@media(max-width:380px){.pane{padding-left:22px;padding-right:66px}.hint{left:20px}}
+@media(min-width:900px){.app{border-inline:1px solid #16141b}}
+</style>
+</head>
+<body>
+<div class="prog" aria-hidden="true"><i id="prog"></i></div>
+<div class="app">
+<header>
+  <div class="top">
+    <button class="date" id="dateBtn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="sheet"><span class="live" aria-hidden="true"></span><span id="today">2026.11.24 TUE</span><span class="sr">・号をえらぶ</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+    <a class="pill latest" id="latest" href="#" hidden>最新号へ</a>
+    <button class="how" id="how" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7"/><circle cx="12" cy="17.2" r=".6"/></svg>選び方</button>
+  </div>
+  <div class="chips" id="chips" role="toolbar" aria-label="カテゴリ"></div>
+</header>
+<div class="dots" id="dots" aria-hidden="true"></div>
+<main class="feed" id="feed"></main>
+<footer>
+  <span class="pos" aria-live="polite"><span id="cur">1</span> <small>/ <span id="tot">–</span></small></span>
+  <button class="next" id="next" type="button"><span id="nextL">次のニュース</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="m5 9 7 7 7-7"/></svg></button>
+</footer>
+</div>
+
+<div class="pop" id="pop" role="note" hidden></div>
+<div class="toast" id="toast" role="status" hidden></div>
+<div class="sheet" id="appSheet" role="dialog" aria-modal="true" aria-labelledby="appT" hidden>
+  <div class="panel">
+    <div class="grab" aria-hidden="true"></div>
+    <div class="shead"><b id="appT">ホーム画面に追加</b><button class="pill" id="appX" type="button">閉じる</button></div>
+    <p class="snote0">アプリのように、ホーム画面のアイコンから全画面で開けます。一度開いた号は、電波が弱い所でも読めます。</p>
+    <ol class="steps" id="appSteps"></ol>
+  </div>
+</div>
+<div class="sheet" id="shareSheet" role="dialog" aria-modal="true" aria-labelledby="shareT" hidden>
+  <div class="panel">
+    <div class="grab" aria-hidden="true"></div>
+    <div class="shead"><b id="shareT">シェア</b><button class="pill" id="shX" type="button">閉じる</button></div>
+    <p class="snote0 shtitle" id="shareTitle"></p>
+    <div class="shbtns">
+      <button type="button" id="shArt" class="shb main"><b>この記事をシェア</b><small>見出し入りのカードで送る</small></button>
+      <button type="button" id="shSite" class="shb"><b>DOPEをシェア</b><small>サイトを紹介する</small></button>
+      <button type="button" id="shCopy" class="shc">記事のリンクをコピー</button>
+    </div>
+  </div>
+</div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetT" hidden>
+  <div class="panel">
+    <div class="shead"><b id="sheetT">号をえらぶ</b><button class="pill" id="sheetX" type="button">閉じる</button></div>
+    <p class="snote0">横にスクロールすると、前の日の号にさかのぼれます。</p>
+    <div class="strip" id="strip"></div>
+    <a class="sall" id="sheetAll" href="archive/">過去の号の一覧を見る</a>
+  </div>
+</div>
+<script>
+{
+const START_HASH = location.hash;
+/* ===== 今日号の記事データ（2026年11月25日号・24時間版）=====
+   作業メモ：エストニア国境とタキソールの記事は11月23日の発表を含むため、対象期間を23日からとした。見解が1件のみの記事は、別媒体で確認できた見解がほかになかったもの。 */
+const ISSUE = {date:"2026.11.26 THU", range:"11月25〜26日"};
+const CAT = {world:"世界", tech:"テック・科学", sports:"スポーツ"};
+const NEWS = [
+{"cat":"world","loc":[38.9,-77.04,"米国・ワシントン"],"region":"北米","title":"米、日中など14か国・地域に<span>新関税</span>案","lead":"米通商代表部は25日、過剰な生産を招く補助金などを理由に、中国やEU、日本など14の国・地域に新たな関税を課す案を発表した。中国には20%を上乗せし、日本やEUなどは貿易合意で決めた15%の上限に収める。","src":{"name":"RTÉ","date":"11月25日","url":"https://www.rte.ie/news/us/2026/1125/1600630-us-tariffs/"},"gist":"米国が、また多くの国にまとめて関税をかけようとしている。すぐには始まらないが、世界の貿易と株価に重くのしかかっている。","detail":["調査は通商法301条にもとづいて8か月続き、16の国・地域が対象だった。メキシコとノルウェーは判断が先送りされた。","中国への20%は、第1次トランプ政権から続く約25%の関税にさらに上乗せされる。","グリア通商代表は、どの関税も数か月後より早く発効することはないとの見通しを示した。今後、公聴会と意見の募集が行われる。"],"kw":["14の国・地域","15%の上限"],"views":[{"type":"当事者の声","who":"オロフ・ギル","role":"欧州委員会の通商担当報道官","stance":"「EUは原因ではない」","text":"EUが構造的な過剰生産の源だという見方をはっきり否定し、むしろ最も影響を受けている地域の一つだと述べた。新たな措置も、合意した15%の上限に収まるものと考えているとした。","media":"ユーノニュース","url":"https://www.eunews.it/en/2026/11/25/threats-of-new-tariffs-from-the-us-the-commission-responds-overcapacity-is-affecting-us-we-are-not-the-cause/"},{"type":"専門家","who":"レイチェル・ジエンバ","role":"米シンクタンク「新アメリカ安全保障センター」非常勤上級研究員","stance":"物価と市場に危険","text":"G20の首脳会議を前にした時期の発表で、2027年に物価の上昇や市場の乱高下が起きる危険が高まると警告した。","media":"アルジャジーラ","url":"https://www.aljazeera.com/economy/2026/11/25/world-reacts-to-trumps-new-tariffs-as-us-stocks-tumble"}],"accent":"#ff2e88"},
+{"cat":"world","loc":[26.57,56.25,"ホルムズ海峡"],"region":"中東","title":"ホルムズ海峡でタンカー2隻が<span>機雷</span>に","lead":"イランの革命防衛隊海軍は25日、ホルムズ海峡でタンカー2隻が機雷に触れて爆発し、炎上したと国営メディアを通じて発表した。2隻が「許可されていない航路」を通ったためだとしており、原油輸送の要所で緊張が続いている。","src":{"name":"ヤフーニュース（ロイター）","date":"11月25日","url":"https://www.yahoo.com/news/world/articles/iran-says-ships-hit-mines-100636256.html"},"gist":"イランは、自分たちに断りなく海峡を通る船は危ないと示している。この海峡の安全は、世界の石油の値段に直結する。","detail":["船の名前や国籍、けが人の有無は明らかにされておらず、独立した確認もとれていない。","イラン軍のアクラミニア報道官は、海峡を監視し管理するための新しい仕組みを配備したと述べた。","イランは、米国による港の海上封鎖の解除などを条件に、48時間以内に海峡を再び開くとカタールの仲介を通じて提案している。"],"kw":["許可されていない航路","海上封鎖"],"views":[{"type":"当事者の声","who":"モハマド・アクラミニア","role":"イラン軍報道官","stance":"「調整なしの船は危険」","text":"軍は海峡を監視・管理する新しい仕組みを備えたと説明し、イラン側と調整せずに通る船はここ数週間で危険が増し、機雷に触れていると述べた。","media":"ヤフーニュース（ロイター）","url":"https://www.yahoo.com/news/world/articles/iran-says-ships-hit-mines-100636256.html"},{"type":"分析・データ","who":"オービタル・リスク・インテリジェンス","role":"海上の危険を分析する会社","stance":"救助を阻む狙い","text":"イランは、攻撃した船に対するえい航や消火、引き揚げの手配を妨げようとしている可能性が高いと分析した。","media":"インシュアランス・ジャーナル（ブルームバーグ）","url":"https://www.insurancejournal.com/news/international/2026/11/25/893726.htm"}],"accent":"#ffd60a"},
+{"cat":"world","loc":[26.64,50.16,"サウジアラビア・ラスタヌラ"],"region":"中東","title":"フーシ派、サウジ最大の<span>製油所</span>攻撃と主張","lead":"イエメンのフーシ派は25日、サウジアラビア東部のラスタヌラにある同国最大の製油所を攻撃し、火災が起きたと主張した。サウジアラビア主導の連合軍は無人機4機を撃ち落としたとしたが、製油所への被害は認めていない。","src":{"name":"ザ・ナショナル","date":"11月25日","url":"https://www.thenationalnews.com/news/gulf/2026/11/25/yemens-houthis-say-they-attacked-saudi-arabias-ras-tanura-refinery/"},"gist":"中東の戦闘が、世界の石油を支える施設のすぐそばまで及んでいる。原油の値段はこの日上がった。","detail":["ラスタヌラの製油所は1日に55万バレルを処理できる、サウジアラビアで最大の製油所だ。","ロイターが確かめたNASAの衛星画像では、約600平方キロにわたって煙が広がっていた。国営石油会社のアラムコはコメントしていない。","フーシ派は、イエメン南部のラヘジ州などでのサウジアラビア側の空爆への報復だと説明した。"],"kw":["ラスタヌラ","無人機"],"views":[{"type":"専門家","who":"タマス・バルガ","role":"英石油仲介会社PVMのアナリスト","stance":"値上がりの要因","text":"フーシ派の主張で地政学的な危険を見込んだ上乗せが膨らんだと指摘した。米国の感謝祭の休日を前に、売りの持ち高を手じまう動きが値上がりを強めうるとも述べた。","media":"オイルプライス・ドットコム（ロイター）","url":"https://oilprice.com/Latest-Energy-News/World-News/Oil-Jumps-Over-2-as-Saudi-Arabia-Downs-Drones-Over-Ras-Tanura.html"},{"type":"当事者の声","who":"ヤヒヤ・サレア","role":"フーシ派の軍事報道官","stance":"報復と位置づけ","text":"攻撃はサウジアラビアによる攻撃への報復だと位置づけ、船会社に対し、サウジアラビアの紅海側の港から船を引き揚げるよう求めた。","media":"ミドル・イースト・アイ","url":"https://www.middleeasteye.net/news/yemen-houthis-claim-saudi-arabia-ras-tanura-attack-retaliation-deadly-strikes"}],"accent":"#2e7bff"},
+{"cat":"world","loc":[37.57,126.98,"韓国・ソウル"],"region":"アジア","title":"韓国株6%安、<span>半導体株</span>売り広がる","lead":"25日の韓国総合株価指数は6.16%下がって4697.51で終わり、5000を再び割り込んだ。米国で半導体株が大きく売られた流れがアジアに広がり、台湾の加権指数も4.8%下がった。","src":{"name":"コリア・ジュンアン・デイリー","date":"11月25日","url":"https://www.koreajoongangdaily.com/business/kospi-plunges-back-below-5000-as-chip-selloff-returns/12990750"},"gist":"AIブームを支えてきた半導体の会社の株が、世界でまとめて売られている。AIの需要が続くのかという疑いと、米国の新しい関税への心配が重なった。","detail":["サムスン電子は9.87%、SKハイニックスは11.05%下がった。取引の開始直後には、プログラム売買を一時止める措置が出た。","日経平均株価は1633円安の5万7011円で終わり、アドバンテストや東京エレクトロンなどが値を下げた。","前日の米国市場では、主な半導体株でつくるフィラデルフィア半導体株指数が7.88%下がっていた。"],"kw":["6.16%","半導体株"],"views":[{"type":"専門家","who":"ハン・ジヨン","role":"韓国・キウム証券のアナリスト","stance":"利益確定と根強い不安","text":"フアン氏のCEO復帰で上がった分を売る動きに加え、AI産業の土台をめぐる不安が解けていないことの表れだと述べた。","media":"コリア・ジュンアン・デイリー","url":"https://www.koreajoongangdaily.com/business/kospi-plunges-back-below-5000-as-chip-selloff-returns/12990750"},{"type":"専門家","who":"ショーン・キム","role":"モルガン・スタンレーのアナリスト","stance":"「2028年の利益の崖」","text":"メモリーの供給が需要に追いつき、半導体メーカーの利益が落ち込む「2028年の利益の崖」が来るおそれがあると警告した。","media":"コリア・タイムズ","url":"https://www.koreatimes.co.kr/economy/20261125/kospi-sinks-6-as-chip-outlook-us-tariff-concerns-weigh"}],"accent":"#ff6b1a"},
+{"cat":"tech","loc":[40.69,-73.99,"米ニューヨーク・ブルックリン"],"region":"北米","title":"米陪審、ファーウェイに<span>有罪評決</span>","lead":"ニューヨークの連邦地裁の陪審は24日、中国の通信機器大手ファーウェイに対し、企業秘密を盗む共謀や銀行詐欺などの罪で有罪の評決を出した。最も重い組織犯罪の共謀の罪では無罪とした。","src":{"name":"PBS（AP通信）","date":"11月24日","url":"https://www.pbs.org/newshour/nation/u-s-jury-finds-chinese-tech-giant-huawei-guilty-of-conspiracy-to-steal-trade-secrets-bank-fraud"},"gist":"米国と中国の技術をめぐる争いを象徴する裁判で、米政府の主張の多くが認められた。ファーウェイは控訴する構えだ。","detail":["12の罪のうち10で有罪とされ、イランへの制裁に違反した罪やマネーロンダリングの共謀なども含まれた。","裁判は9月に始まり、約3か月続いた。刑の言い渡しは2027年9月14日に予定されている。","AP通信によると、科される罰金などは数十億ドルに達する可能性がある。"],"kw":["有罪の評決","無罪"],"views":[{"type":"当事者の声","who":"タイセン・デュバ","role":"米司法省刑事局を率いる司法次官補","stance":"「詐欺と窃盗で築いた」","text":"ファーウェイは20年以上にわたり、詐欺と窃盗、欺きによって世界的な事業を築いてきたと述べた。","media":"ザ・ネクスト・ウェブ","url":"https://thenextweb.com/news/huawei-convicted-trade-secrets-bank-fraud"},{"type":"当事者の声","who":"ブライアン・ヘバーリグ","role":"ファーウェイの米国の弁護士","stance":"控訴へ","text":"有罪とされた部分は控訴すると述べた。組織犯罪の罪での無罪は、政府が描いた事件の筋書きの核心を退けたものだと語った。","media":"PBS（AP通信）","url":"https://www.pbs.org/newshour/nation/u-s-jury-finds-chinese-tech-giant-huawei-guilty-of-conspiracy-to-steal-trade-secrets-bank-fraud"}],"accent":"#19e3ff"},
+{"cat":"world","loc":[32.1,20.1,"リビア・ベンガジ"],"region":"アフリカ","title":"リビア東部勢力、<span>ウクライナに報復</span>宣言","lead":"リビア東部を支配するリビア国民軍は25日、ベンガジの港でロシア軍艦を狙ったウクライナの攻撃によりリビアの海軍将校2人が死亡したとして、ウクライナへの報復を宣言した。ロシアとウクライナの戦争が北アフリカに広がっている。","src":{"name":"News4Jax（AP通信）","date":"11月25日","url":"https://www.news4jax.com/news/2026/11/25/2-libyan-naval-officers-die-of-wounds-from-ukrainian-drone-attack-on-russian-warship-in-benghazi/"},"gist":"ウクライナが遠く離れたアフリカの港でロシアの船を攻撃し、その国の人が巻き込まれた。戦争の範囲が広がることへの懸念が強まっている。","detail":["攻撃は22日、ベンガジの海軍基地で補給中だったロシア海軍のコルベット艦を海上ドローンで狙って行われた。","将校2人は24日夜に死亡した。リビアの当局者によると、リビア人とロシア人の少なくとも10人がけがをした。","調査の説明を受けた当局者によると、海上ドローンはリビア西部にあるウクライナ側の拠点から放たれた。"],"kw":["リビア国民軍","報復"],"views":[{"type":"当事者の声","who":"アントニオ・タヤーニ","role":"イタリア副首相兼外相","stance":"「主権侵害は誤り」","text":"リビアの主権を侵したのは誤りだと述べ、イタリアは港の中まで攻撃するというウクライナの意図を全く知らなかったと強調した。","media":"ヤフーニュース（テレグラフ）","url":"https://www.yahoo.com/news/world/articles/libyan-forces-vow-retaliate-against-134018366.html"}],"accent":"#8b5cff"},
+{"cat":"world","loc":[11.79,34.36,"スーダン・ダマジン"],"region":"アフリカ","title":"スーダン南東部、無人機で<span>市民19人</span>死亡","lead":"スーダンの人権団体の緊急弁護士団は25日、南東部の青ナイル州の州都ダマジンで、即応支援部隊の無人機攻撃により市民19人が死亡したと発表した。住宅地のほか、発電所やダムの施設も狙われた。","src":{"name":"ヤフーニュース（アルジャジーラ）","date":"11月25日","url":"https://www.yahoo.com/news/world/articles/overnight-rsf-drone-attacks-kill-115815865.html"},"gist":"内戦が続くスーダンで、前線から離れた町の住宅地にも無人機が飛んでくるようになった。市民が逃げられる場所が減っている。","detail":["死者には3つの家族の女性6人が含まれ、ダマジンでは15人がけがをした。","攻撃は24日に続き、ロセイレス・ダムや電力の施設も標的になった。","攻撃したのは即応支援部隊だと、スーダン軍の関係者や人権団体が指摘している。即応支援部隊側の反応は伝えられていない。"],"kw":["無人機","住宅地"],"views":[{"type":"当事者の声","who":"スーダン医師ネットワーク","role":"スーダンの医師の団体","stance":"独立調査を要求","text":"確認した情報では標的は住宅地だったとし、国連などによる独立した調査を求めた。この団体は死者を17人としている。","media":"新華社","url":"https://english.news.cn/africa/20261125/50105c3e09a6449ab2a0537dea06843b/c.html"},{"type":"分析・データ","who":"アルジャジーラ","role":"カタールの報道機関（現地記者の報告）","stance":"無人機の急増","text":"即応支援部隊とスーダン軍の双方で無人機の使用が急に増えており、市民にとって安全な場所はないと伝えた。","media":"ヤフーニュース（アルジャジーラ）","url":"https://www.yahoo.com/news/world/articles/overnight-rsf-drone-attacks-kill-115815865.html"}],"accent":"#ffd60a"},
+{"cat":"world","loc":[52.52,13.4,"ドイツ・ベルリン"],"region":"欧州","title":"独首相、ロシアの<span>脅威拡大</span>を警告","lead":"ドイツのメルツ首相は25日、連邦議会での予算の審議で、ロシアはウクライナ以上のものを狙っていると述べ、欧州の安全への脅威を強めていると警告した。欧州はロシアに「明確な限界」を示すべきだと訴えた。","src":{"name":"アイリッシュ・タイムズ（ブルームバーグ）","date":"11月25日","url":"https://www.irishtimes.com/world/europe/2026/11/25/russia-wants-more-than-ukraine-germanys-merz-warns/"},"gist":"欧州で最大の経済国の首相が、ロシアとの対立は長く続くとの見方をはっきり示した。","detail":["メルツ氏は、ロシアがバルト海周辺やポーランド、黒海、宇宙、さらにドイツ国内でも攻撃的な行動を強めていると指摘した。","人命を犠牲にしてまで行動を強めているとも述べた。","この現実を理解しない人は、世界を見誤っているか、まったく別の狙いを持っていると語った。"],"kw":["明確な限界","ウクライナ以上"],"views":[{"type":"当事者の声","who":"アリス・ワイデル","role":"野党「ドイツのための選択肢」共同党首","stance":"支援に反対","text":"同じ討論で、ドイツのための選択肢を率いる立場から、ウクライナを世界で最も腐敗した国の一つと呼び、軍事支援やウクライナ難民への手当の支給を批判した。","media":"タッツ","url":"https://taz.de/Generaldebatte-zum-Haushalt/!6233274/"}],"accent":"#b6ff2e"},
+{"cat":"world","loc":[10.39,-75.51,"コロンビア・カルタヘナ"],"region":"中南米","title":"コロンビアの<span>人質事件</span>、全員救出","lead":"コロンビア北部カルタヘナのスーパーで武装した男たちが人質を取って立てこもった事件で、警察と軍の特殊部隊が25日未明に突入し、人質全員を救出した。犯人の1人が死亡し、4人が逮捕された。","src":{"name":"CBSニュース（AFP通信）","date":"11月25日","url":"https://www.cbsnews.com/news/colombia-supermarket-siege-ends-security-forces-storm-scene/"},"gist":"強盗に失敗した集団が、買い物客らを盾に立てこもった。政府は、政治的な武装組織ではなく犯罪者による事件だとしている。","detail":["男たちは24日、現金輸送車を襲おうとして失敗し、近くのスーパーに逃げ込んで人質を取った。","立てこもりは約17時間続き、その間に一部の人質は解放された。","事件は、政府とコロンビア革命軍との和平合意から10年の節目の日に起きた。"],"kw":["人質","全員を救出"],"views":[{"type":"当事者の声","who":"アベラルド・デラエスプリエジャ","role":"コロンビア大統領","stance":"「投降を拒んだ」","text":"デラエスプリエジャ大統領は、警察と軍の合同作戦だったと説明し、犯人には投降の機会を与えたが拒んだと述べた。犯人たちはゲリラではなく犯罪者だとした。","media":"CBSニュース（AFP通信）","url":"https://www.cbsnews.com/news/colombia-supermarket-siege-ends-security-forces-storm-scene/"}],"accent":"#ff6b1a"},
+{"cat":"world","loc":[47.84,35.14,"ウクライナ・ザポリージャ"],"region":"欧州","title":"ロシア攻撃で9人死亡、<span>発電所</span>も停止","lead":"ウクライナ各地で24日から25日にかけてロシア軍の攻撃が続き、9人が死亡、12歳の子どもを含む59人がけがをした。民間電力会社のDTEKは、火力発電所の1つが大きな被害を受け、発電が止まったと発表した。","src":{"name":"ヤフーニュース（キーウ・インディペンデント）","date":"11月25日","url":"https://www.yahoo.com/news/world/articles/russian-attacks-kill-9-injure-115920316.html"},"gist":"冬を前に、ロシアはウクライナの電気をつくる施設を狙い続けている。停電が長引けば、暖房を失う人が増える。","detail":["最も被害が大きかったのはザポリージャ州で、2人が死亡し、子ども5人を含む31人がけがをした。","ロシア軍は無人機112機を飛ばし、ウクライナ空軍は午前8時までに88機を撃ち落とすか無力化したとしている。","DTEKによると、同社の火力発電所が大規模な攻撃を受けたのは、11月に入って3回目だ。"],"kw":["火力発電所","59人"],"views":[],"accent":"#8b5cff"},
+{"cat":"tech","loc":[52.53,13.38,"ドイツ・ベルリン"],"region":"宇宙","title":"探査機ヘラ、<span>衝突の跡</span>を撮影","lead":"欧州宇宙機関は25日、探査機ヘラが近くから撮った小惑星ディモルフォスの初めての画像を公開した。2022年にNASAの探査機を体当たりさせた跡のクレーターが写っており、地球を小惑星から守る技術の検証が進む。","src":{"name":"惑星協会","date":"11月25日","url":"https://www.planetary.org/articles/heras-first-close-up-images-of-didymos-and-dimorphos"},"gist":"小惑星に物をぶつけて進路を変える方法が本当に使えるのか、その結果を間近で確かめる段階に入った。地球に向かう小惑星を防ぐための大事なデータになる。","detail":["ディモルフォスは直径約151メートルで、直径約730メートルの小惑星ディディモスの周りを回っている。","2022年9月26日のDARTの衝突で、ディモルフォスが1周する時間は約33分短くなった。","ヘラは今、小惑星から25〜30キロほどの距離にいて、12月には約13キロまで近づく予定だ。"],"kw":["クレーター","ディモルフォス"],"views":[{"type":"当事者の声","who":"イアン・カルネリ","role":"欧州宇宙機関のヘラ計画責任者","stance":"地球防衛の検証","text":"こうした衝突が再び起きるのを防ぐ方法を、人類が確かめているところだと述べた。","media":"スターラスト","url":"https://starlust.org/esas-hera-spacecraft-captures-first-ever-close-up-images-of-stadium-sized-crater-on-dimorphos/"}],"accent":"#b6ff2e"},
+{"cat":"tech","loc":[38.64,-90.26,"米ミズーリ州セントルイス"],"region":"北米","title":"心臓病の<span>遺伝リスク</span>を細胞で地図に","lead":"米ワシントン大学医学部の研究チームは25日、冠動脈の病気へのなりやすさに関わる遺伝子の変異が、どの細胞のどの遺伝子に働くかを示す地図を作ったと、科学誌ネイチャーに発表した。新しい治療法の開発につながる可能性がある。","src":{"name":"ユーレカアラート（ワシントン大学医学部）","date":"11月25日","url":"https://www.eurekalert.org/news-releases/1153131"},"gist":"心筋梗塞などの原因になる病気が家族に多い理由を、細胞の単位で読み解く手がかりができた。狙うべき遺伝子がわかれば、新しい薬の候補になる。","detail":["心臓移植を受けた患者から得た44の冠動脈の試料を、細胞1つずつの単位で調べた。","遺伝によるなりやすさの多くは、遺伝子そのものではない部分のDNAを通じて、血管の壁の平滑筋細胞に働いていた。","ある変異は、平滑筋細胞の縮む力を弱め、細胞を硬く、炎症を起こしやすくしていた。"],"kw":["冠動脈","平滑筋細胞"],"views":[{"type":"当事者の声","who":"ネイサン・スティツィエル","role":"ワシントン大学医学部教授（論文の責任著者）","stance":"新薬への道","text":"病気に関わる変異とその標的の遺伝子を結ぶ地図ができ、新しい治療薬につながりうると述べた。この方法はほかの複雑な病気にも使えるとした。","media":"ユーレカアラート","url":"https://www.eurekalert.org/news-releases/1153131"}],"accent":"#2e7bff"},
+{"cat":"tech","loc":[42.36,-71.09,"米マサチューセッツ州ケンブリッジ"],"region":"地球","title":"泥炭地の排水、<span>温暖化の2.7%</span>生む","lead":"米マサチューセッツ工科大学などの研究チームは25日、湿地の泥炭地から水を抜いてきたことが、人間による今の温暖化の約2.7%を生んでいるとネイチャーに発表した。水を抜いた泥炭は、何百年も二酸化炭素を出し続けるという。","src":{"name":"MITニュース","date":"11月25日","url":"https://news.mit.edu/2026/draining-peatlands-leaves-long-warming-legacy-1125"},"gist":"一度乾かした湿地は、長い間温暖化を進め続ける。湿地に水を戻すことが、これ以上の悪化を防ぐ手段になる。","detail":["1800年から2020年までに水を抜かれた泥炭地は、陸地の約0.5%、泥炭地全体の約15%にあたる。","乾いたままにすれば、泥炭地による温暖化の効果の合計は2100年までにほぼ2倍になる。","水を戻せば将来の温暖化の一部は避けられるが、すでに起きた分は元に戻せない。"],"kw":["泥炭地","水を戻す"],"views":[{"type":"当事者の声","who":"セサル・テレール","role":"マサチューセッツ工科大学准教授（研究チーム）","stance":"政策への警鐘","text":"今回の結果が、政策をつくる人や土地の回復に責任を持つ人への警鐘になってほしいと語った。","media":"MITニュース","url":"https://news.mit.edu/2026/draining-peatlands-leaves-long-warming-legacy-1125"}],"accent":"#ff2e88"},
+{"cat":"tech","loc":[35.7,139.7,"東京・新宿"],"region":"日本","title":"パルシステム、<span>約200万件</span>の情報流出","lead":"生協のパルシステムは25日、外部の顧客データ分析サービスKARTEへの不正アクセスにより、利用者に関する情報約200万件が流出したと発表した。氏名や住所、カードの情報は含まれていないという。","src":{"name":"NHK","date":"11月25日","url":"https://news.web.nhk/newsweb/na/nd-20261125de81299"},"gist":"ネット通販などで使われる外部の分析サービスが狙われ、それを使う会社の利用者の情報が流れ出た。自社だけでなく、使っている外部サービスの守りも問われている。","detail":["流出した件数は199万7972件で、重複が含まれる可能性がある。","中身は会員番号や配送拠点の名前、生まれ月、性別、ニックネームなどで、会員番号を含むのは1万2588件だった。","パルシステムは、この情報だけでは個人を特定できないとして、カードの停止やパスワードの変更は求めていない。"],"kw":["約200万件","不正アクセス"],"views":[],"accent":"#ffd60a"},
+{"cat":"sports","loc":[40.41,49.87,"アゼルバイジャン・バクー"],"region":"欧州","title":"バルセロナ、敵地で<span>4得点</span>の快勝","lead":"欧州チャンピオンズリーグのリーグフェーズ第5節が25日に行われ、バルセロナはアゼルバイジャンのバクーでサバフに4対1で勝った。勝ち点を12に伸ばし、4位に上がった。","src":{"name":"ESPN","date":"11月25日","url":"https://www.espn.com/soccer/report/_/gameId/401915378"},"gist":"エースのヤマル選手を欠き、主力の一部も休ませながら大差で勝った。上位8チームに入れば、決勝トーナメントに直接進める。","detail":["アンソニー・ゴードン選手が前半31分と後半51分に決め、アデイェミ選手とガブリエル・ジェズス選手も得点した。","ラミン・ヤマル選手は足首のけがで欠場した。","フリック監督は、ラフィーニャ選手やジョアン・カンセロ選手らを先発から外した。"],"kw":["4対1","勝ち点"],"views":[],"accent":"#19e3ff"},
+{"cat":"sports","loc":[35.99,140.64,"茨城県鹿嶋市"],"region":"日本","title":"鹿島、全北に完勝し<span>東地区首位</span>","lead":"アジア・チャンピオンズリーグ・エリートのリーグステージ第5節が25日に行われ、鹿島アントラーズは本拠地で韓国の全北現代に3対0で勝った。勝ち点13で東地区の首位に立った。","src":{"name":"アジアサッカー連盟","date":"11月25日","url":"https://www.the-afc.com/en/club/afc_champions_league_elite.html/news/md5-kashima-antlers-jpn-3-0-jeonbuk-hyundai-motors-fc-kor"},"gist":"日本のクラブが韓国の強豪に完勝し、アジアの頂点を争う大会で上位進出に大きく近づいた。","detail":["前半17分に小川諒也選手が直接フリーキックを決め、後半15分に千田海人選手が頭で加点した。","途中から出た鈴木優磨選手が、後半28分に3点目を決めた。","2位はヴィッセル神戸で、鹿島との差は勝ち点1。鹿島は12月2日、敵地でタイのポートFCと戦う。"],"kw":["3対0","首位"],"views":[],"accent":"#ff2e88"}
+];
+const OTHERS = [];
+const ORDER = [0,1,2,10,3,4,5,15,6,11,7,8,14,9,12,13];
+const $ = s => document.querySelector(s);
+const feed = $("#feed"), chips = $("#chips"), dotsEl = $("#dots");
+let cat = "all", list = [], cur = 0;
+const store = { get(k,d){try{return JSON.parse(localStorage.getItem(k)) ?? d}catch(e){return d}}, set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}} };
+const KEY = "dpg-" + ISSUE.date.slice(0,10);
+const read = new Set(store.get(KEY + "-read", []));
+const liked = new Set(store.get("dpg-liked", []));
+
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+$("#today").innerHTML = `<span class="yr">${esc(ISSUE.date.slice(0,5))}</span>${esc(ISSUE.date.slice(5))}`;
+const safe = u => /^https:\/\//.test(u) ? u : "";
+const link = (t, u) => safe(u) ? `<a href="${esc(u)}" target="_blank" rel="noopener">${t}</a>` : t;
+const plain = h => h.replace(/<[^>]+>/g, "");
+/* 読了時間：表面〜詳細〜見解の文字数を毎秒8字で計算し、5秒単位に丸める */
+const secs = n => { const t = plain(n.title)+n.lead+n.gist+n.detail.join("")+n.views.map(v=>v.who+v.text).join(""); return Math.max(10, Math.round(t.length/8/5)*5); };
+/* 本文中の重要単語だけ色を変える（1段落2か所まで） */
+const color = (text, kw) => { let out = esc(text), n = 0; for (const w of kw){ if (n >= 2) break; const e = esc(w); const i = out.indexOf(e); if (i > -1){ out = out.slice(0,i) + `<span class="k">${e}</span>` + out.slice(i + e.length); n++; } } return out; };
+
+
+/* 用語の小窓：本文で最初に出てきた1か所だけタップできる */
+const GLOSS = {
+"金正恩":["金正恩（キム・ジョンウン）", "北朝鮮の最高指導者で、朝鮮労働党総書記。北朝鮮は朝鮮労働党による事実上の一党支配で、左右の区分はなじまない。2011年、父の金正日氏の死去を受けて権力を継いだ。"],
+"マジャル":["ペーテル・マジャル", "ハンガリー首相。中道右派の新党「ティサ」党首。2026年の総選挙で、オルバン氏の右派与党フィデスに勝った。"],
+"オルバン":["オルバン・ヴィクトル", "ハンガリーの前首相。右派政党「フィデス・ハンガリー市民連盟」党首。2010年から長く政権を担い、EUのウクライナ支援に批判的な立場をとった。"],
+"岩井明愛":["岩井明愛","埼玉県出身のプロゴルファー（24歳）。双子の妹・千怜もプロ。米ツアー2年目。"],
+"ティティクル":["ジーノ・ティティクル","タイのプロゴルファー。世界ランキング上位の常連で、最終戦は3連覇。"],
+"信任状":"大使を送る国が、相手国の元首にあてて出す書類。受け取られて、大使の仕事が正式に始まる。",
+"IGメタル":"ドイツ最大の労働組合。金属・電機産業などの労働者が加わる。",
+"エルニーニョ":"太平洋の赤道付近の東側で、海面水温が平年より高くなる現象。世界の天候に影響する。",
+"NOAA":"アメリカ海洋大気局。天気や海、気候を観測・予報する政府機関。",
+"NCIC":"全米犯罪情報センター。FBIが管理し、全米の警察が使う犯罪情報のデータベース。",
+"IOC":"国際オリンピック委員会。オリンピックを主催する組織。",
+"スポーツ仲裁裁判所":"スポーツをめぐる争いを裁く国際的な機関。スイスのローザンヌにある。",
+"第5艦隊":"中東の海を担当するアメリカ海軍の艦隊。司令部はバーレーンにある。",
+"ディメル":{iso:"UA",place:[50.78,30.30,"ウクライナ・ディメル"],d:"首都キーウの北約45kmにある村。"},
+"平壌":{iso:"KP",place:[39.02,125.75,"北朝鮮・平壌"],d:"北朝鮮の首都。"},
+"バーレーン":{iso:"BH",place:[26.22,50.58,"バーレーン・マナーマ"],d:"ペルシャ湾に浮かぶ小さな島国。米海軍第5艦隊の司令部がある。"},
+"ザカルパッチャ州":{iso:"UA",place:[48.62,22.30,"ウクライナ・ザカルパッチャ州"],d:"ウクライナ最西部の州。ハンガリーなど4つのEU加盟国と接する。"},
+"バンテン州":{iso:"ID",place:[-6.12,106.15,"インドネシア・バンテン州"],d:"ジャワ島の西端にある州。首都ジャカルタに接する。"},
+"マンハイム":{iso:"DE",place:[49.49,8.47,"ドイツ・マンハイム"],d:"ドイツ南西部の工業都市。"},
+"ルーマニア":{iso:"RO",place:[44.43,26.10,"ルーマニア・ブカレスト"],d:"東欧の国。ウクライナと600km以上の国境で接する。"},
+"リビア":{iso:"LY",place:[32.1,20.1,"リビア・ベンガジ"],d:"北アフリカの国。2011年の政変後、東西に分かれた勢力が対立している。"},
+"ベンガジ":{iso:"LY",place:[32.1,20.1,"リビア・ベンガジ"],d:"リビア東部の港町。東部を支配するハフタル司令官の勢力圏にある。"},
+"首里城":{iso:"JP",place:[26.217,127.719,"沖縄県那覇市・首里城"],d:"那覇市にある、琉球王国の王の城。"},
+"アンタルヤ":{iso:"TR",place:[36.9,30.7,"トルコ・アンタルヤ"],d:"トルコ南部、地中海に面したリゾート都市。COP31の会場になった。"},
+"ガザ":{iso:"PS",place:[31.5,34.47,"パレスチナ・ガザ地区"],d:"地中海に面したパレスチナの地区。イスラエルとエジプトに挟まれている。"},
+"韓国政府":{iso:"KR",place:[37.57,126.98,"韓国・ソウル"],d:"首都はソウル。大統領が強い権限を持つ大統領制の国。"},
+"中国が":{iso:"CN",place:[39.9,116.4,"中国・北京"],d:"首都は北京。共産党が一党で政権を担う。"},
+"九州場所":{iso:"JP",place:[33.59,130.4,"福岡市・福岡国際センター"],d:"毎年11月に福岡市で開かれる大相撲の本場所。"},
+"ザンビア":{iso:"ZM",place:[-15.4,28.3,"ザンビア・ルサカ"],d:"アフリカ南部の内陸国。首都はルサカ。銅の産出で知られる。"},
+"ナイジェリア":{iso:"NG",place:[9.07,7.49,"ナイジェリア・アブジャ"],d:"アフリカ西部の国。人口はアフリカで最も多い。"},
+"バイエルサ州":{iso:"NG",place:[4.9,6.3,"ナイジェリア・バイエルサ州"],d:"ナイジェリア南部、ニジェール川の河口部にある州。川や水路が多く、船での移動が日常的。"},
+"関東":{iso:"JP",place:[35.6,140.1,"関東地方"],d:"東京都を中心とする地方。台風25号では千葉県や神奈川県で被害が出た。"},
+"メッツ":{iso:"US",place:[40.76,-73.85,"アメリカ・ニューヨーク"],d:"ニューヨークを本拠地とするMLBの球団。"},
+"ゼレンスキー":["ウォロディミル・ゼレンスキー", "ウクライナ大統領（2019年〜）。中道政党「国民のしもべ」から当選。元コメディアン・俳優で、2022年のロシアの全面侵攻以降、戦時下の国を率いる。"],
+"トランプ":["ドナルド・トランプ", "アメリカ大統領。右派（保守）の共和党。2025年から2期目。「アメリカ第一」を掲げ、関税や移民の制限を重視する。"],
+"フアン":["ジェンスン・フアン","米半導体大手NVIDIA（エヌビディア）の共同創業者でCEO。1993年の創業から経営を率い、2026年11月23日に取締役会がCEOへの復帰を決めた。"],
+"クレス":["コレット・クレス","NVIDIAの最高財務責任者（CFO）。2013年から在籍し、フアン氏の辞任中は暫定CEOを兼ねた。"],
+"アルポゲ":["レヴェント・アルポゲ","AI企業Anthropicに所属する数学者。専門は数論。"],
+"李在明":["李在明（イ・ジェミョン）", "韓国大統領（2025年〜）。中道左派の「共に民主党」出身（韓国では革新系と呼ばれる）。京畿道知事などを務めた。"],
+"任雄淳":["任雄淳（イム・ウンスン）","韓国大統領府・国家安保室の第2次長。新しい外相に指名された。"],
+"康錦実":["康錦実（カン・グムシル）","弁護士出身。2003年に韓国初の女性法相になった。国家情報院の院長に指名された。"],
+"洪翼杓":["洪翼杓（ホン・イクピョ）", "中道左派の「共に民主党」の国会議員を務め、大統領府の政務首席秘書官だった。統一相に指名された。"],
+"ヒチレマ":["ハカインデ・ヒチレマ", "ザンビア大統領。中道右派の「国家発展統一党（UPND）」党首。実業家出身で、2021年に初当選し、2026年8月に再選。野党時代の2017年には自身も反逆罪で起訴された。"],
+"ムンドゥビレ":["ブライアン・ムンドゥビレ", "ザンビアの野党政治家。2026年8月の大統領選に「国民和解統一繁栄党（NRPUP）」から出馬し、約38%で2位。以前は中道左派の「愛国戦線（PF）」に所属した。選挙に不正があったと主張している。"],
+"大の里":["大の里","二所ノ関部屋の横綱（26歳）。石川県津幡町出身。初土俵から異例の速さで横綱に昇進した。"],
+"豊昇龍":["豊昇龍","立浪部屋の横綱（27歳）。モンゴル出身。"],
+"若元春":["若元春","荒汐部屋の力士（33歳）。弟の若隆景も幕内力士。今場所は平幕から優勝を争った。"],
+"照ノ富士":["照ノ富士","モンゴル出身の元横綱。大けがで序二段まで落ちたあと、復活して横綱になった。"],
+"スクーバル":["タリク・スクーバル","左腕の先発投手（30歳）。タイガースのエースとしてサイ・ヤング賞を2回受賞した。"],
+"山本由伸":["山本由伸","ドジャースの投手。オリックスから2023年にドジャースへ移り、12年総額3億2500万ドルで契約した。"],
+"海上ドローン":"人が乗らず、遠隔で動かす小型の船。爆薬を積んで体当たりする。",
+"コルベット艦":"沿岸の警備などに使う小型の軍艦。",
+"ハフタル司令官":"リビア東部を支配する軍の司令官。ロシアと関係が深い。",
+"取締役会":"会社の大事なことを決める役員の集まり。社長を選んだり辞めさせたりできる。",
+"CFO":"最高財務責任者。会社のお金まわりの責任者。",
+"琉球王国":"1879年まで沖縄にあった王国。首里城はその王の城だった。",
+"COP31":"国連の気候変動の会議（気候変動枠組条約の締約国会議）の31回目。",
+"化石燃料":"石油・石炭・天然ガスのこと。燃やすと温室効果ガスが出る。",
+"UNRWA":"国連パレスチナ難民救済事業機関。パレスチナ難民に教育や医療、水などを届ける国連の組織。",
+"停戦":"戦いを止める約束。ガザでは2025年10月に結ばれた。",
+"リーマン予想":"素数がどう並ぶかについての予想。1859年に出され、数学最大級の未解決問題とされてきた。",
+"Lean":"数学の証明が正しいかを、コンピューターが確かめられるプログラミング言語。",
+"Anthropic":"AIのClaudeを開発しているアメリカの企業。",
+"国家情報院":"韓国の情報機関。スパイ対策や情報収集を担う。",
+"統一相":"韓国で、北朝鮮との関係を担当する大臣。",
+"微博":"中国の大手SNS。中国版のXのような存在。",
+"横綱":"大相撲でいちばん上の地位。",
+"優勝決定戦":"同じ成績で並んだ力士が、優勝を決めるためにもう一番とる取組。",
+"反逆罪":"国を倒そうとしたり裏切ったりする罪。とても重い刑が科される。",
+"重力波":"重い天体が動くと生まれる時空のゆれ。ブラックホールの合体などで観測される。",
+"超新星":"重い星が最期に起こす大爆発。",
+"産業革命前":"人間が石炭などを大量に使い始める前の時代。温暖化をはかるときの基準になる。",
+"サイ・ヤング賞":"MLBで、その年にいちばん活躍した投手に贈られる賞。",
+"ロックアウト":"労使交渉がまとまらず、球団側がチームの活動を止めること。",
+"トレード拒否権":"選手の同意なしに、ほかの球団へトレードされない権利。",
+"FA":"フリーエージェント。どの球団とも自由に契約できる選手。",
+"海上封鎖":"軍艦で港や航路をふさぎ、船の出入りを止めること。米国はイランの石油輸出を断つために実施している。",
+"ホルムズ海峡":{"iso": "IR", "place": [26.57, 56.25, "ホルムズ海峡"], "d": "ペルシャ湾の出口にある狭い海峡。世界の原油輸送の要所。"},
+"バガイ":["エスマイル・バガイ", "イラン外務省報道官。"],
+"アイゼンコット":["ガディ・アイゼンコット", "イスラエルの元軍参謀総長。中道政党「ヤシャル」党首で、2026年10月総選挙後に組閣を任された。"],
+"ネタニヤフ":["ベンヤミン・ネタニヤフ", "イスラエル暫定首相。右派政党「リクード」党首。"],
+"ヤシャル":"アイゼンコット氏が率いるイスラエルの中道政党。",
+"リクード":"ネタニヤフ氏が率いるイスラエルの右派政党。",
+"ベングビール":["イタマル・ベングビール", "イスラエルの国家安全保障相。極右政党「ユダヤの力」党首。"],
+"少数与党":"国会の過半数を持たない政党だけで作る政権。法案を通すには他党の協力が必要になる。",
+"イトゥリ州":{"iso": "CD", "place": [1.56, 30.25, "ブニア"], "d": "コンゴ民主共和国北東部の州。州都はブニア。武装勢力の衝突が多い地域。"},
+"WHO":"世界保健機関。国連の専門機関で、感染症対策などを担う。",
+"テドロス":["テドロス・アダノム・ゲブレイェスス", "WHO事務局長。2017年就任。エチオピア出身。"],
+"フーシ派":"イエメン北部を拠点にする反政府武装勢力。イランの支援を受け、首都サヌアや紅海沿岸の一部を支配する。",
+"ホデイダ":{"iso": "YE", "place": [14.8, 42.95, "ホデイダ"], "d": "イエメン西部の紅海に面する港湾都市。フーシ派の支配下にある。"},
+"ラービグ":{"iso": "SA", "place": [22.8, 39.03, "ラービグ"], "d": "サウジアラビア西部の紅海沿岸の町。ジッダの北約165キロに大規模な製油所がある。"},
+"ナスダック総合指数":"米ナスダック市場の全銘柄で算出する株価指数。IT企業の比重が大きい。",
+"SKハイニックス":"韓国の半導体大手。AI向けの高性能メモリーに強い。",
+"NATO":"北大西洋条約機構。米国や欧州諸国などが加盟する軍事同盟。",
+"BND":"ドイツ連邦情報局。ドイツの対外情報機関。",
+"ゼレンスキー大統領":["ウォロディミル・ゼレンスキー", "ウクライナ大統領（2019年〜）。中道政党「国民のしもべ」から当選した。"],
+"大統領評議会":"リビアの首都トリポリ側の国家元首にあたる機関。",
+"フィンランド湾":{"iso": "FI", "place": [60.0, 26.0, "フィンランド湾"], "d": "バルト海の東の奥にある湾。フィンランド、ロシア、エストニアに囲まれている。"},
+"ハシナ前首相":["シェイク・ハシナ", "バングラデシュの元首相。中道左派の「アワミ連盟」を率い、2024年8月に抗議が広がるなかで国外に逃れた。"],
+"シャマ・オバエド外務担当国務相":["シャマ・オバエド・イスラム", "バングラデシュの外務担当国務相（2026年2月〜）。中道右派の「バングラデシュ民族主義党（BNP）」の幹部で国会議員。"],
+"バングラデシュ":{"iso": "BD", "place": [23.81, 90.41, "ダッカ"], "d": "南アジアの国。インドとミャンマーに接する。"},
+"不敬罪":"タイ刑法112条。国王や王室を侮辱する行為を罰し、最長15年の禁錮刑が科される。",
+"人民党":"タイの中道左派の改革派政党で、最大野党。2026年の総選挙でブムジャイタイ党に次ぐ2位だった。",
+"ルックチャノック議員":["ルックチャノック・シーノーク", "タイの下院議員（比例代表）。中道左派の改革派政党「人民党」所属。"],
+"保釈":"保証金などを条件に、裁判中の被告の身柄の拘束を解くこと。",
+"ペトロ前大統領":["グスタボ・ペトロ", "コロンビアの前大統領。左派連合「歴史的協定」の出身で、同国の近代史で初の左派大統領だった。"],
+"デラエスプリエジャ大統領":["アベラルド・デラエスプリエジャ", "コロンビア大統領。右派の政治運動「祖国の守護者」などから出馬し、2026年6月21日の決選投票で左派候補に勝って当選、8月7日に就任。弁護士・実業家出身。"],
+"カリ":{"iso": "CO", "place": [3.45, -76.53, "カリ"], "d": "コロンビア南西部の大都市。"},
+"国務院":"コロンビアの最高行政裁判所。",
+"ESA":"欧州宇宙機関。欧州各国が共同で運営する宇宙開発機関。",
+"ベピコロンボ":"日本と欧州が共同で進める水星探査計画と、その探査機。2018年10月に打ち上げられた。",
+"みお":"JAXAが開発した水星磁気圏探査機。水星の磁場や大気、周辺の粒子などを調べる。",
+"MPO":"ESAが開発した水星表面探査機。水星の表面や内部の組成、磁場を調べる。",
+"マリアナ海溝":{"iso": "GU", "place": [11.35, 142.2, "マリアナ海溝"], "d": "西太平洋、グアム島の南から東に弧を描いて延びる世界で最も深い海溝。約5300万年前にできたとされる。"},
+"チャレンジャー海淵":{iso:"",place:[11.35,142.2,"マリアナ海溝・チャレンジャー海淵"],d:"マリアナ海溝の最深部。深さは約1万1000メートルで、地球の海で最も深い地点。"},
+"ジェイソン／メディア":"米国の深海探査用の無人潜水機。母船と光ファイバーの線でつながれて操作される。",
+"コンゴ民主共和国":{"iso": "CD", "place": [-4.32, 15.31, "キンシャサ"], "d": "アフリカ中部の大国。首都はキンシャサ。東部では武装勢力の活動が続いている。"},
+"エボラ":"エボラウイルス病。高熱や出血を起こし、死亡率が高い感染症。今回の流行はブンディブギョ型ウイルスによる。",
+"欧州委員会":"EUの行政執行機関。法案の提案や政策の実行を担う。本部はブリュッセル。",
+"ユーロニュース":"フランスのリヨンに本社を置く欧州の多言語ニュース局。",
+"ARTEX":"中国で開発されたとされる、AIで攻撃の手順を自動化する侵入ツール。もとはセキュリティ検査用として公開された。",
+"EUアカデミー":"欧州委員会が運営する、若者向けの研修・学習用オンラインサイト。",
+"韓国総合株価指数":"KOSPI。韓国取引所に上場する全銘柄で算出する代表的な株価指数。",
+"サムスン電子":"韓国最大の企業。メモリー半導体やスマートフォンを手がける。",
+"プログラム売買":"コンピューターがあらかじめ決めた条件で大量の株を自動的に売買する取引。",
+"加権指数":"台湾証券取引所の代表的な株価指数。半導体大手TSMCの比重が大きい。",
+"ウェンブリー・スタジアム":{iso:"GB",place:[51.556,-0.28,"イギリス・ロンドン"],d:"ロンドンにあるイングランド代表の本拠地スタジアム。"},
+"コスタリカ":{"iso": "CR", "place": [9.9281, -84.0907, "サンホセ"], "d": "中米の国。首都サンホセが2031年大会の候補都市になっている。"},
+"ジャマイカ":{"iso": "JM", "place": [17.9712, -76.7936, "キングストン"], "d": "カリブ海の島国。首都キングストンが2031年大会の候補都市。"},
+"ATPファイナルズ":"男子テニスの年間最終戦。その年の成績上位8人が出場し、総当たりの予選リーグと決勝トーナメントで争う。",
+"アルカラス":["カルロス・アルカラス", "スペインの男子テニス選手。23歳。2026年2月の全豪オープン優勝で四大大会全制覇を達成した。"],
+"年間最終ランキング":"シーズン終了時点の世界ランキング。1位はその年の最も優れた選手とみなされる。",
+"テストマッチ":"クリケットの国代表同士による最長5日間の試合形式。各チーム2回ずつ攻撃する。",
+"世界テスト選手権":"国際クリケット評議会（ICC）が主催するテストマッチのリーグ戦。約2年の成績で上位2チームが決勝に進む。",
+"ウィケット":"クリケットで打者がアウトになること。1イニングで10ウィケットを失うと攻撃が終わる。",
+"FIFA":"世界のサッカーを統括する団体。本部はスイスのチューリッヒで、211の国・地域の協会が加盟する。",
+"ズベレフ":["アレクサンダー・ズベレフ", "ドイツの男子テニス選手。29歳。2026年に全仏・全米を制し、世界ランキング1位となった。ATPファイナルズでは過去2回優勝。"],
+"ハタミ":["アミール・ハタミ","イラン国軍の総司令官。階級は少将。"],
+"ムハンマド首相":["ムハンマド・ビン・アブドルラフマン・アール・サーニー", "カタールの首相。カタールには政党がなく、首長家のサーニー家の一員として政府を率いる。"],
+"バンス副大統領":["J・D・バンス", "米国の副大統領。右派（保守）の共和党所属。"],
+"ルビオ国務長官":["マルコ・ルビオ", "米国の国務長官。右派（保守）の共和党所属。"],
+"JMIC":"合同海洋情報センター。中東の航路の安全に関する情報を船会社などに発信する多国籍の組織。",
+"誘導爆弾":"翼と誘導装置を付けた爆弾。航空機から離れた場所で投下し、滑空させて目標に当てる。",
+"セミキン":["ミハイロ・セミキン","ウクライナ・ザポリージャ州の軍政府の長。"],
+"高市首相":["高市早苗", "日本の首相。保守・中道右派の自民党の総裁で、2025年10月に就任した。"],
+"ICC":"国際刑事裁判所。オランダのハーグにあり、集団殺害や戦争犯罪などの罪で個人を裁く常設の裁判所。2002年に発足し、米国は加盟していない。",
+"赤根智子":["赤根智子","国際刑事裁判所の所長。日本人として初めて所長に選ばれ、2024年3月に就任した。"],
+"分担金":"国際機関の運営費を加盟国が分けて負担するお金。",
+"ユークリッド":"欧州宇宙機関が2023年に打ち上げた宇宙望遠鏡。宇宙の広い範囲を撮影し、ダークマターやダークエネルギーを調べている。",
+"クエーサー":"銀河の中心にある非常に明るい天体。巨大なブラックホールが周りの物質をのみ込むときに強い光を出す。",
+"赤方偏移":"宇宙の膨張で光の波長が引き伸ばされる度合い。値が大きいほど遠く、昔の天体を見ていることになる。",
+"アブ・ナヘル":["ナイーム・アブ・ナヘル","ハマスの内部治安機関の長。2026年9月に就き、それまでは副長官を務めていた。"],
+"内部治安機関":"ハマスがガザで運営する情報・治安組織。内務省の下に置かれている。",
+"ハンユニス":{iso:"PS",place:[31.34,34.3,"ハンユニス"],d:"ガザ地区南部の都市。"},
+"キオクシア":"日本の半導体メモリー大手。旧東芝メモリ。",
+"アフリカ・ネーションズカップ":"アフリカの代表チームが王座を争うサッカーの大陸選手権。",
+"アフリカサッカー連盟":"アフリカのサッカーを統括する団体。アフリカ・ネーションズカップを主催する。",
+"防空識別圏":"国が領空の外側に設ける空域で、近づく航空機に識別や通報を求める。領空とは違い、主権が及ぶ範囲ではない。",
+"合同参謀本部":"韓国軍の陸・海・空軍の作戦を指揮する機関。",
+"鬱陵島":{iso:"KR",place:[37.5,130.86,"鬱陵島"],d:"日本海にある韓国の島。人口は約9000人。"},
+"ランサムウェア":"データを暗号化したり盗んだりして、元に戻すことや公開しないことと引き換えに金銭を要求する不正なプログラム。",
+"楽天証券":"楽天グループのインターネット証券会社。",
+"ティグライ":{iso:"ET",place:[14,39,"エチオピア・ティグライ州"],d:"エチオピア北部の州。2020〜22年に連邦政府軍と地元勢力の内戦の舞台となった。"},
+"アラマタ":{iso:"ET",place:[12.42,39.56,"アラマタ"],d:"ティグライ州南部の町。"},
+"ティグライ人民解放戦線":"ティグライ州を治めてきた政党で、武装勢力も持つ。2020〜22年の内戦で連邦政府と戦った。",
+"メケレ":{iso:"ET",place:[13.5,39.47,"メケレ"],d:"ティグライ州の州都。"},
+"タキソール":"イチイの木から見つかった抗がん剤で、一般名はパクリタキセル。がん細胞の分裂を止め、乳がんや卵巣がん、肺がんの治療に使われる。",
+"イチイ":"常緑の針葉樹。タキソールのもとになる成分を含む。",
+"ベンサミアナタバコ":"タバコの近縁の植物。成長が早く、研究でたんぱく質や化合物を作らせるのに広く使われている。",
+"ノーレン":["アンドレアス・ノーレン", "スウェーデン議会の議長。中道右派の「穏健党」出身。2026年9月に再選された。"],
+"クリステション":["ウルフ・クリステション", "スウェーデンの中道右派政党「穏健党」の党首。2022年10月に首相に就き、2026年9月に辞任してからは暫定的に職務を続けている。"],
+"スウェーデン民主党":"スウェーデンの右派ナショナリスト政党で、ロイターやAPは極右と表記することが多い。移民の制限を重視し、2026年の総選挙で議会第3党となった。",
+"エンティティー・リスト":"米商務省が作る、安全保障上の懸念がある外国の企業や団体の一覧。載った相手に米国の製品や技術を渡すには許可が必要になる。",
+"メガスピード":"シンガポールのクラウド企業。エヌビディア製の半導体を使った計算能力を貸し出している。",
+"リーグフェーズ":"欧州チャンピオンズリーグの1次リーグ。36チームが1つの順位表で8試合ずつ戦い、上位が決勝トーナメントに進む。",
+"デニズ・ギュル":["デニズ・ギュル","ガラタサライのフォワード。"],
+"道路検問所":"国境で人や車の出入りを確認する施設。",
+"タリン":{iso:"EE",place:[59.44,24.75,"タリン"],d:"エストニアの首都。"},
+"国民権益委員会":"韓国の政府機関で、汚職の防止や国民の苦情の処理を担う。",
+"大学修学能力試験":"韓国で毎年11月に行われる全国共通の大学入試。「スヌン」と呼ばれる。",
+"デビスカップ":"男子テニスの国別対抗戦。シングルス2試合とダブルス1試合で勝敗を決める。",
+"レヘチカ":["イジー・レヘチカ","チェコの男子テニス選手。世界ランキング14位。"],
+"ボローニャ":{iso:"IT",place:[44.49,11.34,"ボローニャ"],d:"イタリア北部の都市。"},
+"米国":{iso:"US",place:[38.9,-77.04,"アメリカ・ワシントン"],d:"北米の国。首都はワシントン。"},
+"アメリカ":{iso:"US",place:[38.9,-77.04,"アメリカ・ワシントン"],d:"北米の国。首都はワシントン。"},
+"ワシントン":{iso:"US",place:[38.9,-77.04,"アメリカ・ワシントン"],d:"アメリカの首都。ホワイトハウスや連邦議会がある。"},
+"イラン":{iso:"IR",place:[35.69,51.39,"イラン・テヘラン"],d:"中東の国。首都はテヘラン。ペルシャ湾とホルムズ海峡に面する。"},
+"カタール":{iso:"QA",place:[25.29,51.53,"カタール・ドーハ"],d:"ペルシャ湾に突き出た半島の国。首都はドーハ。"},
+"ロシア":{iso:"RU",place:[55.76,37.62,"ロシア・モスクワ"],d:"ユーラシア大陸の北部に広がる、面積が世界最大の国。首都はモスクワ。"},
+"ウクライナ":{iso:"UA",place:[50.45,30.52,"ウクライナ・キーウ"],d:"東欧の国。首都はキーウ。2022年からロシアの全面侵攻を受けている。"},
+"ザポリージャ":{iso:"UA",place:[47.84,35.14,"ウクライナ・ザポリージャ"],d:"ウクライナ南東部、ドニプロ川沿いの工業都市。ザポリージャ州の州都。"},
+"東京":{iso:"JP",place:[35.68,139.77,"東京"],d:"日本の首都。"},
+"日本海":{iso:"",place:[40.0,134.0,"日本海"],d:"日本列島と朝鮮半島、ロシア極東に囲まれた海。"},
+"欧州チャンピオンズリーグ":"欧州のサッカークラブの頂点を決める大会。各国リーグの上位クラブが出場する。",
+"欧州":{iso:"",place:[50.1,10.0,"欧州"],d:"ヨーロッパのこと。ユーラシア大陸の西側にあたる地域。"},
+"アイルランド":{iso:"IE",place:[53.35,-6.26,"アイルランド・ダブリン"],d:"北大西洋に浮かぶ島国。首都はダブリン。"},
+"イスラエル":{iso:"IL",place:[31.5,34.9,"イスラエル"],d:"地中海の東岸にある国。ガザ地区やレバノン、ヨルダンなどと接する。"},
+"韓国":{iso:"KR",place:[37.57,126.98,"韓国・ソウル"],d:"朝鮮半島の南側の国。首都はソウル。"},
+"北朝鮮":{iso:"KP",place:[39.02,125.75,"北朝鮮・平壌"],d:"朝鮮半島の北側の国。首都は平壌。"},
+"慶尚北道":{iso:"KR",place:[36.57,128.6,"韓国・慶尚北道"],d:"韓国南東部の道（広域自治体）。日本海に浮かぶ鬱陵島もこの道に属する。"},
+"モロッコ":{iso:"MA",place:[34.02,-6.84,"モロッコ・ラバト"],d:"アフリカ北西端の国。首都はラバト。"},
+"セネガル":{iso:"SN",place:[14.69,-17.45,"セネガル・ダカール"],d:"アフリカ大陸の西端にある国。首都はダカール。"},
+"スイス":{iso:"CH",place:[46.95,7.45,"スイス・ベルン"],d:"欧州中部の内陸国。首都はベルン。"},
+"エチオピア":{iso:"ET",place:[9.03,38.74,"エチオピア・アディスアベバ"],d:"アフリカ東部の内陸国。首都はアディスアベバ。"},
+"コペンハーゲン":{iso:"DK",place:[55.68,12.57,"デンマーク・コペンハーゲン"],d:"デンマークの首都。"},
+"スウェーデン":{iso:"SE",place:[59.33,18.07,"スウェーデン・ストックホルム"],d:"北欧の国。首都はストックホルム。"},
+"シンガポール":{iso:"SG",place:[1.29,103.85,"シンガポール"],d:"マレー半島の南端にある都市国家。"},
+"中国":{iso:"CN",place:[39.9,116.4,"中国・北京"],d:"東アジアの国。首都は北京。"},
+"マレーシア":{iso:"MY",place:[3.14,101.69,"マレーシア・クアラルンプール"],d:"東南アジアの国。首都はクアラルンプール。"},
+"タイ":{iso:"TH",place:[13.76,100.5,"タイ・バンコク"],d:"東南アジアの国。首都はバンコク。"},
+"インドネシア":{iso:"ID",place:[-6.2,106.85,"インドネシア・ジャカルタ"],d:"東南アジアの島国。人口は世界で4番目に多い。"},
+"トルコ":{iso:"TR",place:[39.93,32.86,"トルコ・アンカラ"],d:"アジアと欧州にまたがる国。首都はアンカラ。"},
+"イングランド":{iso:"GB",place:[51.51,-0.13,"イギリス・ロンドン"],d:"イギリスを構成する4つの地域の一つ。中心都市はロンドン。"},
+"エストニア":{iso:"EE",place:[59.44,24.75,"エストニア・タリン"],d:"バルト海に面した国。首都はタリン。ロシアと国境を接する。"},
+"イタリア":{iso:"IT",place:[41.9,12.5,"イタリア・ローマ"],d:"南欧の国。首都はローマ。"},
+"チェコ":{iso:"CZ",place:[50.08,14.44,"チェコ・プラハ"],d:"欧州中部の内陸国。首都はプラハ。"},
+"カナダ":{iso:"CA",place:[45.42,-75.7,"カナダ・オタワ"],d:"北米の国。首都はオタワ。"},
+"穏健党":"スウェーデンの中道右派政党。保守と自由主義を掲げ、クリステション氏が党首を務める。",
+"中央党":"スウェーデンの中道政党。農民の政党として始まり、地方の振興や自由主義的な経済政策を掲げる。",
+"キリスト教民主党":"スウェーデンの中道右派政党。キリスト教の価値観に基づき、家族政策などを重視する。",
+"自由党":"スウェーデンの中道右派政党。自由主義を掲げ、教育政策などを重視する。",
+"ハマス":"パレスチナのイスラム主義組織。政治部門と武装部門を持ち、2007年からガザ地区を実効支配してきた。",
+"NVIDIA":"米国の半導体大手。AIの計算に使う画像処理半導体（GPU）で大きなシェアを持つ。",
+"CEO":"最高経営責任者。会社の経営のトップ。",
+"独立取締役":"会社の経営陣から独立した立場で、経営を監視する取締役。",
+"輸出管理":"安全保障上重要な製品や技術が外国に渡らないよう、国が輸出を規制すること。",
+"CNBC":"米国の経済ニュース専門のテレビ局。",
+"イエメン":{"iso":"YE","place":[15.37,44.19,"イエメン・サヌア"],"d":"アラビア半島の南西にある国。首都はサヌアだが、フーシ派が支配している。"},
+"サウジアラビア":{"iso":"SA","place":[24.71,46.68,"サウジアラビア・リヤド"],"d":"アラビア半島の大半を占める国。首都はリヤド。世界有数の産油国。"},
+"リヤド":{"iso":"SA","place":[24.71,46.68,"サウジアラビア・リヤド"],"d":"サウジアラビアの首都。"},
+"キング・アブドラ金融地区":{"iso":"SA","place":[24.76,46.64,"サウジアラビア・リヤド キング・アブドラ金融地区"],"d":"リヤド北部にある金融街。高層ビルが集まる。"},
+"PIF":"サウジアラビアの政府系ファンド「公共投資基金」。",
+"政府系ファンド":"国のお金を運用する投資の基金。",
+"機雷":"水中に置き、船が触れたり近づいたりすると爆発する兵器。",
+"イラン海軍":"イラン国軍の海軍。イランには国軍とは別に革命防衛隊もある。",
+"ガリバフ":["モハンマドバゲル・ガリバフ","イランの国会議長。イランでは政党が政治の中心ではなく、ガリバフ氏は保守派（原理派）の陣営に属する。"],
+"中国共産党":"中国の政権党。事実上の一党支配を続けており、左右の区分はなじまない。総書記は習近平氏。",
+"中央規律検査委員会":"中国共産党の中で、党員の汚職や規律違反を調べる機関。",
+"政治局":"中国共産党の指導部。24人で構成され、その中の常務委員会が最高指導部にあたる。",
+"陳吉寧":["陳吉寧（チェン・ジーニン）","中国共産党の政治局員で、上海市党委員会書記（2022年10月〜）。中国は共産党による一党支配で、左右の区分はなじまない。清華大学の学長、環境保護相、北京市長を務めた。"],
+"習近平":["習近平（シー・ジンピン）","中国の国家主席で、中国共産党総書記。中国は共産党による一党支配で、左右の区分はなじまない。2007年に上海市のトップを務めた。"],
+"李強":["李強（リー・チャン）","中国の首相。中国共産党の政治局常務委員。中国は一党支配で、左右の区分はなじまない。かつて上海市のトップを務めた。"],
+"上海":{"iso":"CN","place":[31.23,121.47,"中国・上海"],"d":"中国東部の大都市。中国の経済と金融の中心。"},
+"北京":{"iso":"CN","place":[39.9,116.4,"中国・北京"],"d":"中国の首都。"},
+"清華大学":{"iso":"CN","place":[40,116.33,"中国・北京 清華大学"],"d":"北京にある中国有数の大学。多くの政治指導者を出してきた。"},
+"反腐敗運動":"習近平氏が2012年に党のトップに就いてから進めている、汚職の取り締まり。",
+"神舟24号":"中国の有人宇宙船。2026年11月25日、酒泉衛星発射センターから打ち上げられた。",
+"天宮":"中国が地球の周りに建設した宇宙ステーション。",
+"パキスタン":{"iso":"PK","place":[33.69,73.05,"パキスタン・イスラマバード"],"d":"南アジアの国。首都はイスラマバード。"},
+"ヒマラヤ":{"iso":"","place":[28,84,"ヒマラヤ山脈"],"d":"インド亜大陸と中国のチベットの間に連なる、世界で最も高い山脈。"},
+"ムハンマド・ジーシャン・アリ":["ムハンマド・ジーシャン・アリ","パキスタンの宇宙飛行士で、パイロット（40歳）。パキスタンの宇宙機関と中国の有人宇宙機関の協定にもとづいて選ばれ、北京で訓練を受けた。"],
+"湯洪波":["湯洪波（タン・ホンボー）","中国の宇宙飛行士（51歳）。神舟24号の船長。"],
+"シャバズ・シャリフ":["シャバズ・シャリフ","パキスタンの首相。中道右派の「パキスタン・イスラム教徒連盟ナワズ派（PML-N）」に所属する。"],
+"微細藻類":"顕微鏡で見るほど小さな藻の仲間。食料や酸素をつくる源として研究されている。",
+"キヌア":"南米原産の穀物に似た作物。栄養が豊かで、宇宙での栽培が研究されている。",
+"トランプ政権":"2025年に始まったトランプ大統領の2期目の政権。トランプ氏は右派（保守）の共和党。",
+"EU":"欧州連合。欧州の27か国が加盟し、貿易の交渉はまとめて行う。",
+"最高裁":"米国の連邦最高裁判所。2026年2月、非常事態の権限を使った関税を無効と判断した。",
+"通商法301条":"米国の法律の条文。相手国の不公正な貿易慣行に対して、制裁の関税などを課すことを認めている。",
+"中国商務省":"中国政府で貿易や商業を担当する省。",
+"ガリウム":"半導体の材料に使う金属。中国が世界の生産の大半を占める。",
+"WSJ":"米国の経済紙ウォール・ストリート・ジャーナル。",
+"日経平均株価":"東京証券取引所に上場する代表的な225社の株価から計算する指数。",
+"データセンター":"たくさんのコンピューターを集めて動かす施設。AIの計算にも使われる。",
+"共同通信":"日本の通信社。",
+"ミャンマー":{"iso":"MM","place":[19.76,96.08,"ミャンマー・ネピドー"],"d":"東南アジアの国。首都はネピドー。2021年に国軍がクーデターで実権を握った。"},
+"英国":{"iso":"GB","place":[51.51,-0.13,"イギリス・ロンドン"],"d":"欧州北西部の島国。首都はロンドン。"},
+"ミリバンド外相":["エド・ミリバンド","英国の外相。中道左派の労働党に所属し、かつて同党の党首を務めた。"],
+"国際司法裁判所":"国と国との争いを裁く国連の裁判所。オランダのハーグにある。",
+"ロヒンギャ":"ミャンマー西部に暮らしてきたイスラム教徒の少数民族。2017年に軍の掃討作戦で多くが隣国バングラデシュへ逃れた。",
+"ジェノサイド":"民族や宗教などの集団を、意図して滅ぼそうとする行為。集団殺害。",
+"国軍":"国の正式な軍隊。ミャンマーでは国軍が政治の実権を握っている。",
+"国連安全保障理事会":"世界の平和と安全に責任を持つ国連の機関。15か国で構成される。",
+"下院":"二院制の議会のうち、国民の選挙で選ばれる側の議院。",
+"PK":"ペナルティーキック。反則があったとき、ゴール前の決まった位置から蹴るキック。",
+"仲裁人":"裁判所の代わりに争いを判断する専門家。今回は3人で判断した。",
+"上訴委員会":"競技団体の中で、処分への不服を審理する機関。",
+"没収負け":"規則違反などで、試合の結果にかかわらず負けとされること。",
+"スイス連邦最高裁判所":{"iso":"CH","place":[46.52,6.63,"スイス・ローザンヌ"],"d":"スイスの最高裁判所。ローザンヌにあり、スポーツ仲裁裁判所の裁定への不服も扱う。"},
+"コバルト":"電気自動車やスマートフォンの電池に使われる金属。",
+"上海有色網":"中国・上海の金属市場の情報会社。",
+"マイクロソフト":"米国のIT大手。基本ソフトのWindowsや、企業向けのメールや会議のサービスを提供する。",
+"コード・レッド":"マイクロソフトの社内で最も深刻な警戒態勢。",
+"オーストラリア":{"iso":"AU","place":[-35.28,149.13,"オーストラリア・キャンベラ"],"d":"南半球の国。首都はキャンベラ。"},
+"Windows":"マイクロソフトのコンピューター用の基本ソフト。",
+"Exchange Online":"マイクロソフトの企業向けのメールサービス。",
+"佐藤輝明":["佐藤輝明","阪神タイガースの強打者（27歳）。2026年にセ・リーグの三冠王とMVPを獲得した。三塁手としてゴールデングラブ賞を受けた。"],
+"阪神タイガース":"兵庫県西宮市の甲子園球場を本拠地とするプロ野球セ・リーグの球団。",
+"カブス":"米大リーグの球団。シカゴを本拠地とする。",
+"セ・リーグ":"日本のプロ野球の2つのリーグのひとつ。6球団が所属する。",
+"三冠王":"1シーズンで打率、本塁打、打点の3部門すべてで1位になること。",
+"MVP":"最優秀選手。そのシーズンで最も活躍した選手に贈られる賞。",
+"ESPN":"米国のスポーツ専門のメディア。",
+"ポスティングシステム":"日本の球団に所属する選手が、球団の許可を得て大リーグの球団と交渉できる制度。",
+"ブラジル":{"iso":"BR","place":[-15.79,-47.88,"ブラジル・ブラジリア"],"d":"南米最大の国。首都はブラジリア。"},
+"ルラ大統領":["ルイス・イナシオ・ルラ・ダシルバ","ブラジル大統領。左派の労働者党（PT）に所属する。2026年10月の決選投票で再選され、2027年1月から4期目に入る。"],
+"労働者党":"ブラジルの左派政党。ルラ大統領が所属する。",
+"義務的な支出":"年金や社会保障など、法律で支払いが決まっている政府の支出。",
+"通貨レアル":"ブラジルの通貨。",
+"ボベスパ":"ブラジルの代表的な株価指数。",
+"国内総生産":"一定の期間に国内で生み出されたモノやサービスの価値の合計。GDP。",
+"アオコンゴウインコ":"ブラジル原産の青いインコ。英語名はスピックスコンゴウインコ。",
+"サンパウロ動物園":{"iso":"BR","place":[-23.65,-46.62,"ブラジル・サンパウロ動物園"],"d":"ブラジル最大の都市サンパウロにある動物園。"},
+"国際自然保護連合":"世界の野生生物の絶滅の危険度を評価し、一覧にまとめている国際機関。",
+"野生絶滅":"飼育されている個体だけが生き残り、野生にはいなくなった状態。",
+"ECB":"欧州中央銀行。ユーロを使う国々の金融政策を決める。本部はドイツのフランクフルト。",
+"欧州中央銀行":"ユーロを使う国々の金融政策を決める中央銀行。本部はドイツのフランクフルト。",
+"オランダ":{"iso":"NL","place":[52.37,4.9,"オランダ・アムステルダム"],"d":"欧州北西部の国。首都はアムステルダム。"},
+"スレイペン総裁":["オラフ・スレイペン","オランダ中央銀行の総裁で、ECBの理事会のメンバー。"],
+"ユーロ圏":{"iso":"","place":[50.11,8.68,"ユーロ圏"],"d":"共通通貨ユーロを使う欧州の国々。"},
+"利上げ":"中央銀行が政策金利を引き上げること。物価の上昇を抑えるために行う。",
+"ドイツ":{"iso":"DE","place":[52.52,13.4,"ドイツ・ベルリン"],"d":"欧州中部の国。首都はベルリン。"},
+"ナーゲル総裁":["ヨアヒム・ナーゲル","ドイツの中央銀行、ドイツ連邦銀行の総裁。"],
+"フランス":{"iso":"FR","place":[48.86,2.35,"フランス・パリ"],"d":"欧州西部の国。首都はパリ。"},
+"パリ":{"iso":"FR","place":[48.86,2.35,"フランス・パリ"],"d":"フランスの首都。"},
+"米中央情報局":"CIA。米国の対外情報機関。",
+"CIA":"米中央情報局。米国の対外情報機関。",
+"国家情報長官室":"米国の情報機関全体をまとめる役所。",
+"ニューヨーク・タイムズ":"米国の新聞。",
+"FBI":"米連邦捜査局。米国の捜査機関。",
+"中国南方航空":"中国の大手航空会社のひとつ。厦門航空を傘下に持つ。",
+"厦門航空":"中国南東部、福建省の厦門（アモイ）を拠点とする航空会社。",
+"ボーイング":"米国の航空機大手。",
+"737MAX8":"ボーイングの小型旅客機の機種。",
+"米中首脳会談":"米国と中国の首脳の会談。2026年5月に北京で開かれた。",
+"レアル・マドリード":"スペインの首都マドリードを本拠地とするサッカークラブ。",
+"PSV":"オランダのアイントホーフェンを本拠地とするサッカークラブ。",
+"アーセナル":"英国の首都ロンドンを本拠地とするサッカークラブ。",
+"ドルトムント":{"iso":"DE","place":[51.51,7.47,"ドイツ・ドルトムント"],"d":"ドイツ西部の都市。ここでは、この街を本拠地とするサッカークラブを指す。"},
+"マンチェスター・シティ":"英国のマンチェスターを本拠地とするサッカークラブ。",
+"ナポリ":{"iso":"IT","place":[40.85,14.27,"イタリア・ナポリ"],"d":"イタリア南部の都市。ここでは、この街を本拠地とするサッカークラブを指す。"},
+"コモ":{"iso":"IT","place":[45.81,9.09,"イタリア・コモ"],"d":"イタリア北部の都市。ここでは、この街を本拠地とするサッカークラブを指す。"},
+"ガラタサライ":"トルコのイスタンブールを本拠地とするサッカークラブ。",
+"ムバッペ":["キリアン・ムバッペ","レアル・マドリードに所属するフランス代表のフォワード。"],
+"バルベルデ":["フェデリコ・バルベルデ","レアル・マドリードに所属するウルグアイ代表のミッドフィルダー。"],
+"ベリンガム":["ジュード・ベリンガム","レアル・マドリードに所属するイングランド代表のミッドフィルダー。"],
+"ビニシウス":["ビニシウス・ジュニオール","レアル・マドリードに所属するブラジル代表のフォワード。"],
+"世宗市":{"iso":"KR","place":[36.48,127.29,"韓国・世宗"],"d":"韓国中部にある行政都市。ソウルから南に約110キロ。多くの中央省庁が移っている。"},
+"ソウル":{"iso":"KR","place":[37.57,126.98,"韓国・ソウル"],"d":"韓国の首都。"},
+"行政安全省":"韓国の行政組織や地方自治、災害対応などを担う省。",
+"放送通信委員会":"韓国の放送と通信の政策を担う機関。",
+"監査院":"韓国の政府機関の会計や業務を監査する機関。",
+"警察庁":"韓国の警察を束ねる中央の機関。",
+"統一省":"韓国で北朝鮮との関係や統一政策を担う省。",
+"法改正":"法律の内容を改めること。",
+"アムネスティ・インターナショナル":"ロンドンに本部を置く国際人権団体。",
+"アムネスティ":"国際人権団体アムネスティ・インターナショナルのこと。",
+"民兵":"正規の軍ではない、武装した住民などの集団。",
+"戦争犯罪":"戦争の中で国際法に反して行われる行為。市民を狙った攻撃などが含まれる。",
+"国連人権理事会":"世界の人権問題を扱う国連の機関。スイスのジュネーブにある。",
+"ジャカルタ":{"iso":"ID","place":[-6.21,106.85,"インドネシア・ジャカルタ"],"d":"インドネシアの首都。ジャワ島の北西部にある。"},
+"ミルキタ":"インドネシアのミルク味のあめのブランド。",
+"欧州宇宙機関":"欧州の国々が共同でつくる宇宙開発の機関。ESA。",
+"ブラックホール":"重力がきわめて強く、光さえ抜け出せない天体。",
+"アラン諸島":{"iso":"IE","place":[53.13,-9.77,"アイルランド・アラン諸島"],"d":"アイルランド西岸の沖にある島々。"},
+"ラバト":{"iso":"MA","place":[34.02,-6.84,"モロッコ・ラバト"],"d":"モロッコの首都。"},
+"保健省":"ここでは、ハマスが運営するガザの保健省を指す。",
+"特殊部隊":"特別な訓練を受け、難しい作戦を担う部隊。",
+"米通商代表部":"米国の通商交渉を担う大統領直属の機関。USTR。関税などの貿易措置も調べて決める。",
+"グリア通商代表":["ジェイミソン・グリア","米通商代表（2025年〜）。右派（保守）の共和党のトランプ政権が起用した、通商交渉の責任者。弁護士出身。"],
+"メキシコ":{"iso":"MX","place":[19.43,-99.13,"メキシコ・メキシコ市"],"d":"北米の南部にある国。首都はメキシコ市。"},
+"ノルウェー":{"iso":"NO","place":[59.91,10.75,"ノルウェー・オスロ"],"d":"北欧の国。首都はオスロ。"},
+"第1次トランプ政権":"トランプ大統領の1期目（2017〜21年）の政権。中国からの輸入品に高い関税を課した。",
+"G20":"主要20か国・地域。先進国と新興国の首脳が経済などを話し合う枠組み。",
+"革命防衛隊":"イランの最高指導者に直属する軍事組織。正規軍とは別に、独自の陸海空の部隊を持つ。",
+"アクラミニア報道官":["モハマド・アクラミニア","イラン軍（正規軍）の報道官。"],
+"ラスタヌラ":{"iso":"SA","place":[26.64,50.16,"サウジアラビア・ラスタヌラ"],"d":"サウジアラビア東部、ペルシャ湾に面した港町。大きな製油所と原油の積み出し港がある。"},
+"連合軍":"イエメンの内戦に介入している、サウジアラビアが率いる国々の軍事連合。",
+"NASA":"米航空宇宙局。米国の宇宙開発を担う政府機関。",
+"アラムコ":"サウジアラビアの国営石油会社。世界最大級の石油会社。",
+"ラヘジ州":{"iso":"YE","place":[13.05,44.88,"イエメン・ラヘジ州"],"d":"イエメン南部の州。南部の港町アデンの北にある。"},
+"サウジアラビア東部":{"iso":"SA","place":[26.43,50.1,"サウジアラビア東部州"],"d":"ペルシャ湾に面したサウジアラビアの東部州。主な油田や石油施設が集まる。"},
+"中東":{"iso":"","place":[29.0,45.0,"中東"],"d":"アジアの西の端からアフリカの北東部にかけての地域。"},
+"紅海":{"iso":"","place":[20.0,38.5,"紅海"],"d":"アフリカ大陸とアラビア半島の間にある細長い海。スエズ運河で地中海とつながる。"},
+"アジア":{"iso":"","place":[34.0,100.0,"アジア"],"d":"ユーラシア大陸の東側を中心とする地域。"},
+"台湾":{"iso":"TW","place":[25.03,121.57,"台湾・台北"],"d":"東アジアの島。台北に政府があり、半導体の生産が盛ん。"},
+"アドバンテスト":"日本の半導体検査装置の大手。",
+"東京エレクトロン":"日本の半導体製造装置の大手。",
+"フィラデルフィア半導体株指数":"米国の主な半導体関連の会社の株価でつくる指数。",
+"ファーウェイ":"中国の通信機器・スマートフォンの大手。本社は広東省深圳。",
+"連邦地裁":"米国の連邦の地方裁判所。連邦の法律に関わる事件を最初に裁く。",
+"陪審":"市民から選ばれた人たちが、有罪か無罪かを決める米国の裁判の仕組み。",
+"組織犯罪の共謀":"組織ぐるみで犯罪を続けたとして罪に問う米国の法律の罪。最も重い罪とされていた。",
+"マネーロンダリング":"犯罪で得たお金の出どころを隠し、正当なお金に見せかけること。",
+"ニューヨーク":{"iso":"US","place":[40.71,-74.01,"アメリカ・ニューヨーク"],"d":"アメリカ東部の大都市。金融の中心地。"},
+"AP通信":"米国の通信社。世界各地のニュースを報道機関に配信している。",
+"リビア国民軍":"リビア東部を支配するハフタル司令官の武装勢力。ロシアと関係が深い。",
+"北アフリカ":{"iso":"","place":[28.0,15.0,"北アフリカ"],"d":"アフリカ大陸の北部、地中海に面した地域。"},
+"リビア西部":{"iso":"LY","place":[32.89,13.19,"リビア・トリポリ"],"d":"首都トリポリを中心とする地域。国連が認める暫定政府がある。"},
+"スーダン":{"iso":"SD","place":[15.5,32.56,"スーダン・ハルツーム"],"d":"アフリカ北東部の国。首都はハルツーム。2023年から国軍と即応支援部隊の内戦が続く。"},
+"青ナイル州":{"iso":"SD","place":[11.79,34.36,"スーダン・青ナイル州"],"d":"スーダン南東部、エチオピアに近い州。州都はダマジン。"},
+"ダマジン":{"iso":"SD","place":[11.79,34.36,"スーダン・ダマジン"],"d":"スーダン南東部、青ナイル川沿いの町。青ナイル州の州都。"},
+"ロセイレス・ダム":{"iso":"SD","place":[11.8,34.39,"スーダン・ロセイレス・ダム"],"d":"青ナイル川にある大きなダム。水力発電所を持つ。"},
+"緊急弁護士団":"スーダンの人権団体。内戦での市民への被害を記録している。",
+"即応支援部隊":"スーダンの準軍事組織。RSF。2023年からスーダン軍と内戦を続けている。",
+"スーダン医師ネットワーク":"スーダンの医師の団体。内戦での死傷者の情報を発信している。",
+"スーダン軍":"スーダンの正規軍。ブルハン将軍が率い、即応支援部隊と戦っている。",
+"国連":"国際連合。世界の平和と安全を守るための国際機関で、193か国が加盟する。",
+"メルツ首相":["フリードリヒ・メルツ","ドイツ首相（2025年5月〜）。中道右派のキリスト教民主同盟（CDU）の党首。"],
+"連邦議会":"ドイツの議会の下院にあたる。首相を選ぶ。",
+"バルト海":{"iso":"","place":[58.0,20.0,"バルト海"],"d":"北欧と東欧に囲まれた海。ロシアも面している。"},
+"ポーランド":{"iso":"PL","place":[52.23,21.01,"ポーランド・ワルシャワ"],"d":"中欧の国。首都はワルシャワ。ウクライナやベラルーシと国境を接する。"},
+"黒海":{"iso":"","place":[43.0,34.0,"黒海"],"d":"ウクライナやトルコ、ロシアなどに囲まれた内海。"},
+"ドイツのための選択肢":"ドイツの政党。AfD。ロイターやAPは極右と表記することが多い。移民の制限やEUへの懐疑を掲げ、連邦議会で最大の野党。",
+"コロンビア":{"iso":"CO","place":[4.71,-74.07,"コロンビア・ボゴタ"],"d":"南米の北西部にある国。首都はボゴタ。"},
+"カルタヘナ":{"iso":"CO","place":[10.39,-75.51,"コロンビア・カルタヘナ"],"d":"コロンビア北部、カリブ海に面した港町。旧市街が世界遺産の観光地。"},
+"コロンビア革命軍":"コロンビア最大だった左派ゲリラ組織。FARC。2016年に政府と和平合意を結び、主流は政党になった。",
+"ザポリージャ州":{"iso":"UA","place":[47.84,35.14,"ウクライナ・ザポリージャ州"],"d":"ウクライナ南東部の州。一部をロシア軍が占領している。"},
+"DTEK":"ウクライナ最大の民間エネルギー会社。火力発電所などを持つ。",
+"ヘラ":"欧州宇宙機関の小惑星探査機。2024年に打ち上げられた。",
+"ディモルフォス":"小惑星ディディモスの周りを回る小さな小惑星。2022年にNASAの探査機DARTが体当たりした。",
+"ディディモス":"地球の近くを通る小惑星。小さな衛星ディモルフォスを従えている。",
+"DART":"NASAの探査機。2022年に小惑星に体当たりし、軌道を変えられるかを試した。",
+"ワシントン大学医学部":"米ミズーリ州セントルイスにあるワシントン大学の医学部。",
+"冠動脈":"心臓の筋肉に血液を送る血管。詰まると心筋梗塞などを起こす。",
+"ネイチャー":"英国で発行される科学誌。世界で最も影響力のある科学誌の一つ。",
+"心筋梗塞":"心臓の血管が詰まり、心臓の筋肉の一部が死んでしまう病気。",
+"平滑筋細胞":"血管や内臓の壁にある筋肉の細胞。血管を縮めたりゆるめたりする。",
+"マサチューセッツ工科大学":"米マサチューセッツ州ケンブリッジにある大学。MIT。",
+"泥炭地":"枯れた植物が分解されきらずに積もった湿地。大量の炭素をため込んでいる。",
+"パルシステム":"首都圏を中心に食品などの宅配を手がける生協のグループ。",
+"生協":"生活協同組合。組合員が出資し、食品などを共同で購入する組織。",
+"KARTE":"東京のIT企業プレイドが提供する、サイトの利用者の行動を分析するサービス。",
+"不正アクセス":"権限のない人が、他人のシステムに入り込むこと。",
+"アゼルバイジャン":{"iso":"AZ","place":[40.41,49.87,"アゼルバイジャン・バクー"],"d":"カスピ海の西岸にある国。首都はバクー。"},
+"バクー":{"iso":"AZ","place":[40.41,49.87,"アゼルバイジャン・バクー"],"d":"アゼルバイジャンの首都。カスピ海に面する。"},
+"バルセロナ":"スペインのサッカークラブ。スペイン北東部の都市バルセロナを本拠地とする。",
+"サバフ":"アゼルバイジャンのサッカークラブ。首都バクーを本拠地とする。",
+"ヤマル選手":["ラミン・ヤマル","スペイン代表のサッカー選手。バルセロナ所属のフォワード。"],
+"アンソニー・ゴードン":["アンソニー・ゴードン","イングランド代表のサッカー選手。バルセロナ所属のフォワード。"],
+"フリック監督":["ハンジ・フリック","バルセロナの監督。元ドイツ代表監督。"],
+"決勝トーナメント":"リーグフェーズの後に行う勝ち抜き戦。上位8チームは決勝トーナメントの1回戦に直接進む。",
+"アジア・チャンピオンズリーグ・エリート":"アジアサッカー連盟が主催する、アジアのクラブ王者を決める大会。",
+"リーグステージ":"大会の最初の段階。東西の地区に分かれ、各クラブが8試合を戦う。",
+"東地区":"大会の東アジアのクラブが入る組。上位8クラブが次の段階に進む。",
+"鹿島アントラーズ":"茨城県鹿嶋市を本拠地とするJリーグのクラブ。",
+"全北現代":"韓国Kリーグのクラブ。全羅北道の全州を本拠地とする。",
+"ヴィッセル神戸":"兵庫県神戸市を本拠地とするJリーグのクラブ。",
+"ポートFC":"タイのサッカークラブ。首都バンコクを本拠地とする。",
+"小川諒也":["小川諒也","鹿島アントラーズのディフェンダー。"],
+"千田海人":["千田海人","鹿島アントラーズのディフェンダー。"],
+"鈴木優磨":["鈴木優磨","鹿島アントラーズのフォワード。"],
+"アデイェミ":["カリム・アデイェミ", "ドイツ代表のサッカー選手。バルセロナ所属のフォワード。"],
+"ガブリエル・ジェズス":["ガブリエル・ジェズス", "ブラジル代表経験のあるサッカー選手。バルセロナ所属のフォワード。"],
+"ラフィーニャ":["ラフィーニャ", "ブラジル代表のサッカー選手。バルセロナ所属のフォワード。"],
+"ジョアン・カンセロ":["ジョアン・カンセロ", "ポルトガル代表のサッカー選手。バルセロナ所属のディフェンダー。"]
+};
+const KATA = /^[\u30A1-\u30FC]+$/, KCH = /[\u30A1-\u30FA\u30FC]/;
+const GTERMS = Object.keys(GLOSS).sort((a, b) => b.length - a.length);
+/* 長い登録語の一部になっている箇所では、短い語を当てない（「韓国総合株価指数」の中の「韓国」など） */
+const GSUPER = Object.fromEntries(GTERMS.map(t => [t, GTERMS.filter(k => k !== t && k.includes(t)).map(esc)]));
+const inLonger = (html, i, t, e) => GSUPER[t].some(ek => { for (let o = ek.indexOf(e); o > -1; o = ek.indexOf(e, o + 1)) if (i - o >= 0 && html.startsWith(ek, i - o)) return true; return false; });
+const gloss = (html, used) => {
+  for (const t of GTERMS){
+    if (used.has(t)) continue;
+    const e = esc(t); let i = html.indexOf(e);
+    while (i > -1){
+      const inTag = html.lastIndexOf("<", i) > html.lastIndexOf(">", i);
+      const inBtn = html.lastIndexOf("<a class=\"g\"", i) > html.lastIndexOf("</a>", i);
+      const kataBad = KATA.test(t) && (KCH.test(html[i - 1] || "") || KCH.test(html[i + e.length] || ""));
+      if (!inTag && !inBtn && !kataBad && !inLonger(html, i, t, e)) break;
+      i = html.indexOf(e, i + 1);
+    }
+    if (i < 0) continue;
+    used.add(t);
+    html = html.slice(0, i) + `<a class="g" role="button" tabindex="0" data-g="${e}" aria-expanded="false">${e}</a>` + html.slice(i + e.length);
+  }
+  return html;
+};
+
+function panes(n, no){
+  const P = [], used = new Set(), T = h => gloss(h, used);
+  P.push(`<div class="pane"><div class="in"><div class="tags"><span class="tag">${CAT[n.cat]}</span><span class="tag o">${esc(n.region)}</span><span class="tag o">全部で約${secs(n)}秒</span></div>
+    <h2>${n.title}</h2><p class="lead">${T(color(n.lead, n.kw))}</p>
+    <div class="src">出典：${link(esc(n.src.name), n.src.url)}・${esc(n.src.date)}</div>
+    ${no === 0 ? '<div class="go">横に流すと詳細 <span>→</span></div>' : ""}</div></div>`);
+  P.push(`<div class="pane"><div class="in"><div class="tags"><span class="tag y">ざっくり言うと</span></div><p class="big">${T(color(n.gist, n.kw))}</p></div></div>`);
+  n.detail.forEach((d, k) => P.push(`<div class="pane"><div class="in"><div class="tags"><span class="tag">くわしい話 ${k+1}</span></div><p class="big xl">${T(color(d, n.kw))}</p>${k === n.detail.length-1 ? `<div class="src">出典：${link(esc(n.src.name), n.src.url)}（${esc(n.src.date)}）</div>` : ""}</div></div>`));
+  n.views.forEach((v, k) => P.push(`<div class="pane"><div class="in"><div class="tags"><span class="tag w">${v.type === "専門家" ? "専門家の見解" : esc(v.type)} ${k+1} / ${n.views.length}</span><span class="tag o">${esc(v.stance)}</span></div>
+    <div class="who">${esc(v.who)}</div><div class="role">${esc(v.role)}</div><p class="big">${T(esc(v.text))}</p>
+    <div class="src">出典：${link(esc(v.media), v.url)}</div>${k === n.views.length-1 ? `<p class="note">見解は発言や分析の要約です。「専門家の見解」は専門家本人、「当事者の声」は関係者・機関の説明、「分析・データ」は機関や媒体の分析です。${n.views.length < 2 ? "別の媒体で確認できた見解は1件だけのため、無理に増やしていません。" : ""}</p>` : ""}</div></div>`));
+  return P;
+}
+
+function closing(){
+  const c = {world:0, tech:0, sports:0}; NEWS.forEach(n => c[n.cat]++);
+  return `<section class="card end" id="end" style="--a:#ffd60a" aria-label="締め">
+    <div class="blob"></div>
+    <div class="track" tabindex="0"><div class="pane"><div class="in">
+      <div class="tags"><span class="tag">今日はここまで</span></div>
+      <h2>${NEWS.length}本で、<span>世界がどう動いたか</span>をつかめた</h2>
+      <div class="mix"><div><b>${c.world}</b><small>世界</small></div><div><b>${c.tech}</b><small>テック・科学</small></div><div><b>${c.sports}</b><small>スポーツ</small></div></div>
+      <div class="btnrow"><button class="sitebtn" type="button" data-share-site><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12"/><path d="m7 8 5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>DOPEをシェア</button>${STANDALONE ? "" : `<button class="sitebtn ghost" type="button" data-install>ホーム画面に追加</button>`}</div>
+      <ul class="recap">${ORDER.map((i, k) => `<li><button type="button" data-jump="${i}"><b>${String(k+1).padStart(2,"0")}</b>${esc(plain(NEWS[i].title))}</button></li>`).join("")}</ul>
+      <p class="go">横に流すと選び方 <span>→</span></p><p class="go"><a class="backno" href="archive/">過去の号を読む</a> <span>→</span></p></div></div>
+    <div class="pane"><div class="in">
+      <div class="tags"><span class="tag">ニュースの選び方</span></div>
+      <ol>
+        <li>鮮度は24時間以内が原則。今日号は${ISSUE.range}の報道からのまとめ号で、一部に数日前の発表を含む。</li>
+        <li>出典は通信社と一次情報（AP、ロイター、NHK、政府や機関の発表など）。SNSの投稿だけの話題は載せない。</li>
+        <li>物差しは「世界が動いたか」。政権・国境・市場が動くこと、大勢の暮らしに効くことを優先。炎上やゴシップは載せない。</li>
+        <li>フックの強さでは選ばない。地味でも大事なニュースは見出しで届ける。</li>
+        <li>配分の目安は世界55%・テック科学30%・スポーツ15%。今日は${NEWS.length}本（世界${c.world}・テック科学${c.tech}・スポーツ${c.sports}）。</li>
+        <li>地域を分散させ、アメリカと日本に偏らない。</li>
+        <li>明るい話題を最低2本入れる。</li>
+      </ol>
+      <p class="note">見解は別々の媒体から、見る角度の違うものを原則2件。確認できない場合は無理に増やさない。各記事は速報性のある要約です。正確な内容は必ず出典で確かめてください。記事の選定・要約・解説は、AI（Anthropic社のClaude）が出典を確認しながら編集しています。誤りに気づいたら出典を優先してください。</p>
+    </div></div></div>
+  </section>`;
+}
+
+function othersCard(){
+  const items = OTHERS.filter(o => cat === "all" || o.cat === cat);
+  if (!items.length) return "";
+  const col = {world:"#ff2e88", tech:"#19e3ff", sports:"#ffd60a"};
+  return `<section class="card others" id="others" style="--a:#19e3ff" aria-label="ほかのニュース">
+    <div class="blob"></div>
+    <div class="track" tabindex="0"><div class="pane"><div class="in" style="margin:0">
+      <div class="tags"><span class="tag">ほかのニュース</span><span class="tag o">見出しだけ・${items.length}本</span></div>
+      <h2 style="font-size:clamp(24px,6.6vw,32px)">ほかにも、<span>こんなことが</span>あった</h2>
+      <ul class="olist">${items.map(o => `<li style="--c:${col[o.cat]}"><i>${CAT[o.cat]}</i><b>${esc(o.t)}</b><small>出典：${link(esc(o.src), o.url)}・${esc(o.date)}</small></li>`).join("")}</ul>
+      <p class="note">解説付きの記事にはしていないニュースです。くわしくは出典で確かめてください。</p>
+    </div></div></div>
+  </section>`;
+}
+
+/* 見出しの改行：文節（助詞・句読点のあと）でまとまりを作り、その途中では改行しない */
+const PHRASE = /([^、。！？」）]*?(?:から|まで|より|とは|では|には|へは|は|が|を|に|で|と|の|へ|も|や|、|。|！|？|」|）)(?=[^ぁ-んー、。！？」）]|$)|[^、。！？」）]+$)/g;
+/* 長すぎる文節（7字以上）は、さらに自然な切れ目で分ける。1行に入らない文節が丸ごと次の行へ送られ、
+   「米、」だけが1行目に残るような改行を防ぐ。切れ目：「など」「ほか」「・」の後／漢字・カタカナに付いた助詞のあとにひらがなが続くところ／数字の前（「1億2千万」の途中は除く）／カタカナと漢字の境目（「フアン氏」「千万ドル」のような短い付属語は切らない） */
+const SUBCUT = /(?<=など|ほか|・)|(?<=[一-龯々ァ-ヴー][がはにで]|を)(?=[ぁ-ん]{3}|[ぁ-ん]{2}[一-龯々])|(?<=[ぁ-ん])(?=[ァ-ヴ][ァ-ヴー]{2})|(?<=[^\d０-９.,，億万千百十兆約第])(?=[\d０-９])|(?<=[ァ-ヴー]{2}[人氏系派産製軍州省党側]?)(?=[一-龯々]{2})|(?<=[一-龯々]{2})(?<![億万千百十兆])(?=[ァ-ヴー]{3})/;
+const splitLong = p => {
+  if (p.length < 7) return [p];
+  const out = [];
+  for (const x of p.split(SUBCUT).filter(Boolean)){
+    if (out.length && (x.length < 2 || out[out.length - 1].length < 2)) out[out.length - 1] += x;   // 1字だけのかけらは前とつなぐ
+    else out.push(x);
+  }
+  return out;
+};
+const phrase = el => {
+  const runs = [...el.childNodes].map(n => [n.textContent, n.nodeType === 1]);
+  const text = runs.map(r => r[0]).join("");
+  const parts = text.split(/(?=「|（)/).flatMap(x => x.match(PHRASE) || [x]).filter(Boolean)
+    .reduce((a, x) => { if (a.length && /^(最も|最)$/.test(a[a.length - 1])) a[a.length - 1] += x; else a.push(x); return a; }, [])   // 「最も」は次とつなぐ
+    .flatMap(splitLong);
+  if (parts.join("") !== text) return;
+  const acc = []; for (const [t, a] of runs) for (const _ of t) acc.push(a);
+  el.textContent = ""; let k = 0;
+  for (const x of parts){
+    const ph = document.createElement("span"); ph.className = "ph";
+    let buf = "", cur = acc[k];
+    const flush = () => { if (!buf) return; if (cur){ const a = document.createElement("span"); a.textContent = buf; ph.appendChild(a); } else ph.appendChild(document.createTextNode(buf)); buf = ""; };
+    for (const ch of x){ if (acc[k] !== cur){ flush(); cur = acc[k]; } buf += ch; k++; }
+    flush(); el.appendChild(ph);
+  }
+};
+/* アプリとして（ホーム画面から）開いているか */
+const STANDALONE = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+/* 見出しを少し（最大8%）小さくすれば1行減るなら、小さくする。
+   例：「NVIDIA、辞任した／フアン氏を／CEOに戻す」の3行を、2行に収める */
+const headLines = h => Math.round(h.getBoundingClientRect().height / parseFloat(getComputedStyle(h).lineHeight));
+const fitHeads = () => {
+  feed.querySelectorAll(".card:not(.end) .pane:first-child h2").forEach(h => {
+    h.style.fontSize = "";
+    const base = parseFloat(getComputedStyle(h).fontSize), n = headLines(h);
+    if (n < 3) return;
+    for (let f = 0.98; f >= 0.919; f -= 0.02){
+      h.style.fontSize = (base * f).toFixed(1) + "px";
+      if (headLines(h) < n) return;
+    }
+    h.style.fontSize = "";
+  });
+};
+let fitT = 0;
+addEventListener("resize", () => { clearTimeout(fitT); fitT = setTimeout(fitHeads, 150); });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitHeads);
+function render(){
+  list = ORDER.filter(i => cat === "all" || NEWS[i].cat === cat);
+  const counts = {all:NEWS.length}; NEWS.forEach(n => counts[n.cat] = (counts[n.cat]||0) + 1);
+  chips.innerHTML = [["all","すべて"],["world","世界"],["tech","テック・科学"],["sports","スポーツ"]].map(([k,l]) => `<button class="chip" type="button" data-c="${k}" aria-pressed="${k===cat}">${l}<b>${counts[k]||0}</b></button>`).join("");
+  feed.innerHTML = list.map((i, k) => {
+    const n = NEWS[i], P = panes(n, k), key = plain(n.title);
+    return `<section class="card" data-k="${k}" style="--a:${n.accent}" aria-label="${esc(key)}">
+      <div class="blob"></div><div class="num" aria-hidden="true">${String(ORDER.indexOf(i)+1).padStart(2,"0")}</div>
+      ${k === 0 ? '<div class="hint">// 下へスワイプで次のニュース</div>' : ""}
+      <div class="track" tabindex="0" aria-label="横にスクロールで詳細">${P.join("")}</div>
+      <div class="rail"><button class="like share" type="button" aria-label="シェア" aria-haspopup="dialog" data-share="${ORDER.indexOf(i)+1}"><svg viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg></button><button class="like" type="button" aria-label="いいね" aria-pressed="${liked.has(key)}" data-key="${esc(key)}"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button></div>
+      <div class="bars" aria-hidden="true">${P.map((_, j) => `<i class="${j ? "" : "on"}"></i>`).join("")}</div>
+    </section>`;
+  }).join("") + othersCard() + closing();
+  dotsEl.innerHTML = list.map(() => "<i></i>").join("") + (feed.querySelector(".others") ? "<i></i>" : "") + "<i></i>";
+  $("#tot").textContent = list.length;
+  feed.scrollTop = 0; setCur(0);
+  feed.querySelectorAll(".card:not(.end) .track").forEach(t => t.addEventListener("scroll", () => {
+    const j = Math.round(t.scrollLeft / t.clientWidth);
+    t.parentElement.querySelectorAll(".bars i").forEach((b, x) => b.classList.toggle("on", x === j));
+  }, {passive:true}));
+  feed.querySelectorAll("h2").forEach(phrase);
+  fitHeads();
+  if (typeof fixBackno === "function") fixBackno();
+  feed.querySelectorAll(".card").forEach(c => io.observe(c));
+  if (typeof markTall === "function") requestAnimationFrame(markTall);
+}
+
+function setCur(k){
+  cur = k;
+  const hd = document.querySelector("header"); if (hd) hd.style.setProperty("--a", k < list.length ? NEWS[list[k]].accent : "#ffd60a");
+  try { if (location.hash !== "#" + tag(k)) history.replaceState(null, "", "#" + tag(k)); } catch(e){}
+  const atEnd = k >= list.length;
+  $("#cur").textContent = Math.min(k + 1, list.length);
+  const hasO = !!feed.querySelector(".others"), endK = list.length + (hasO ? 1 : 0);
+  $("#nextL").textContent = k >= endK ? "最初にもどる" : k === list.length && hasO ? "まとめへ" : k === list.length - 1 ? (hasO ? "ほかのニュースへ" : "まとめへ") : "次のニュース";
+  dotsEl.querySelectorAll("i").forEach((d, x) => d.classList.toggle("on", x === k));
+  clearTimeout(dwell);
+  if (!atEnd){ const key = plain(NEWS[list[k]].title); dwell = setTimeout(() => { if (cur === k && !read.has(key)){ read.add(key); store.set(KEY + "-read", [...read]); paintRead(); } }, 1200); }
+}
+let dwell = 0;
+const paintRead = () => { $("#prog").style.width = Math.round(read.size / NEWS.length * 100) + "%"; };
+paintRead();
+const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) setCur(e.target.classList.contains("others") ? list.length : e.target.classList.contains("end") ? list.length + (feed.querySelector(".others") ? 1 : 0) : +e.target.dataset.k); }), {root:feed, threshold:.6});
+
+const go = k => feed.children[k]?.scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"});
+const side = d => { const t = feed.children[cur]?.querySelector(".track"); if (t) t.scrollBy({left: d * t.clientWidth, behavior:"smooth"}); };
+
+chips.addEventListener("click", e => { const b = e.target.closest(".chip"); if (b){ cat = b.dataset.c; render(); } });
+feed.addEventListener("click", e => {
+  const l = e.target.closest(".like");
+  if (l){ const k = l.dataset.key; liked.has(k) ? liked.delete(k) : liked.add(k); l.setAttribute("aria-pressed", liked.has(k)); store.set("dpg-liked", [...liked]); return; }
+  const j = e.target.closest("[data-jump]");
+  if (j){ if (cat !== "all"){ cat = "all"; render(); } go(ORDER.indexOf(+j.dataset.jump)); }
+});
+$("#next").addEventListener("click", () => go(cur >= feed.children.length - 1 ? 0 : cur + 1));
+$("#how").addEventListener("click", () => { go(feed.children.length - 1); setTimeout(() => { const t = $("#end .track"); if (t) t.scrollTo({left: t.clientWidth, behavior:"smooth"}); }, 450); });
+document.addEventListener("keydown", e => {
+  if (e.target.closest && e.target.closest("input,textarea")) return;
+  if (!document.getElementById("sheet").hidden || !document.getElementById("shareSheet").hidden || !document.getElementById("appSheet").hidden) return;
+  if (e.key === "ArrowDown"){ e.preventDefault(); go(Math.min(cur + 1, feed.children.length - 1)); }
+  if (e.key === "ArrowUp"){ e.preventDefault(); go(Math.max(cur - 1, 0)); }
+  if (e.key === "ArrowRight"){ e.preventDefault(); side(1); }
+  if (e.key === "ArrowLeft"){ e.preventDefault(); side(-1); }
+});
+
+
+/* 地名の地図：簡略化した大陸の輪郭（正距円筒図法）。ピンチ・ドラッグ・ボタンで拡大縮小 */
+const LAND = "M12,12L18,8L30,7L40,8L52,8L65,10L85,6L98,5L105,10L118,18L124,26L114,33L110,36L104,40L104,43L99,47L100,53L98,51L96,48L90,49L83,51L83,56L89,59L93,57L92,62L97,68L101,69L103,70L98,70L94,66L88,64L84,62L75,58L70,54L68,48L65,48L70,55L63,46L59,43L56,38L56,31L50,24L42,19L34,17L26,20L18,20L15,17ZM107,0L120,-4L150,-5L160,-2L162,3L158,8L148,10L138,18L130,16L126,11L122,3ZM100,69L105,67L118,67L128,73L145,83L141,92L139,100L132,104L127,111L122,116L117,119L115,124L112,130L108,132L105,128L107,118L108,108L110,96L104,92L99,84L100,78L102,74ZM163,57L164,50L170,48L174,42L190,41L191,45L200,47L205,46L212,47L214,50L218,58L223,66L231,66L228,73L220,81L219,88L220,93L215,100L213,105L207,112L200,113L198,108L194,101L192,95L193,86L189,79L189,74L185,72L176,73L170,72L165,67L163,63ZM224,103L227,103L230,93L229,90L224,95ZM170,42L171,35L179,32L176,30L182,27L188,24L194,24L201,23L204,18L210,18L208,13L205,8L220,10L225,10L235,9L240,8L250,5L260,5L280,1L295,4L310,7L320,6L340,8L350,8L360,10L360,13L358,16L350,18L343,21L336,27L338,21L335,19L322,19L317,24L321,30L315,35L310,36L309,43L306,43L306,40L302,38L301,41L299,43L302,47L300,53L290,57L288,62L289,67L285,69L280,65L279,70L283,77L281,75L278,70L278,62L274,61L272,56L267,57L260,63L258,70L253,62L252,57L247,54L240,53L237,52L236,54L239,56L235,61L232,62L225,65L223,63L219,56L215,50L214,47L215,42L210,42L207,41L206,38L203,41L201,38L198,38L196,40L192,36L188,34L183,35L180,39L178,41L174,42ZM185,20L185,16L190,14L195,10L200,8L208,7L210,8L205,12L202,14L198,18L196,22L192,22L190,19ZM175,28L181,27L182,25L178,22L177,19.5L174,21L175,24ZM170,26L174,26L174,23L171,23ZM156,14L166,14L165,12L158,12ZM310,47L312,44L316,44L320,43L321,40L322,37L321,33L325,34L320,36L319,40L317,41L313,43L310,44ZM275,73L286,84L282,82L277,76ZM289,77L297,71L299,78L296,82L290,81ZM285,84L294,86L286,85.5ZM311,79L321,81L330,88L321,87L317,83ZM300,60L302,65L306,71L302,71L300,64ZM294,100L294,112L298,113L304,111L312,110L318,113L321,116L326,117L330,115L333,108L333,103L326,97L322,89L321,95L316,90L310,90L306,92L302,96ZM352,113L358,116L354,119L351,124L347,124L352,118ZM95,56L106,58L102,55.5ZM300,56L302,53L301,53L300,55ZM260,72L262,71L260,68Z";
+let mapState = null;
+const drawMap = () => { const m = mapState; if (!m) return; const h = m.w * m.ar; m.svg.setAttribute("viewBox", `${m.cx - m.w/2} ${m.cy - h/2} ${m.w} ${h}`); m.svg.querySelectorAll(".names text").forEach(t => { t.setAttribute("font-size", m.w / 26); t.style.display = (+t.dataset.s > m.w * .09 || t.getAttribute("font-weight") === "900") ? "" : "none"; }); m.pin.setAttribute("r", m.w / 45); m.ring.setAttribute("r", m.w / 22); m.ring.setAttribute("stroke-width", m.w / 220); };
+const zoomBy = f => { if (!mapState) return; mapState.w = Math.min(360, Math.max(4, mapState.w * f)); drawMap(); };
+const initMap = (el, la, lo, color) => {
+  const svg = el.querySelector("svg"), x = lo + 180, y = 78 - la;
+  mapState = {svg, cx:x, cy:y, w:90, ar: 180 / svg.clientWidth || .56, pin: svg.querySelector(".pin"), ring: svg.querySelector(".pring")};
+  const pts = new Map(); let last = null;
+  svg.addEventListener("pointerdown", e => { svg.setPointerCapture(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]); last = null; });
+  svg.addEventListener("pointermove", e => {
+    if (!pts.has(e.pointerId)) return;
+    const prev = pts.get(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]);
+    const k = mapState.w / svg.clientWidth;
+    if (pts.size === 1){ mapState.cx -= (e.clientX - prev[0]) * k; mapState.cy -= (e.clientY - prev[1]) * k; drawMap(); }
+    else if (pts.size === 2){ const [a, b] = [...pts.values()], d = Math.hypot(a[0]-b[0], a[1]-b[1]); if (last) zoomBy(last / d); last = d; }
+  });
+  const up = e => { pts.delete(e.pointerId); last = null; };
+  svg.addEventListener("pointerup", up); svg.addEventListener("pointercancel", up);
+  svg.addEventListener("wheel", e => { e.preventDefault(); zoomBy(e.deltaY > 0 ? 1.25 : .8); }, {passive:false});
+  el.querySelector("[data-z=in]").onclick = () => zoomBy(.5);
+  el.querySelector("[data-z=out]").onclick = () => zoomBy(2);
+  el.querySelector("[data-z=all]").onclick = () => { mapState.cx = 180; mapState.cy = 67; mapState.w = 360; drawMap(); };
+  drawMap();
+};
+const mapHTML = (la, lo, color) => { const x = lo + 180, y = 78 - la;
+  return `<div class="mapbox"><svg role="img" aria-label="地図"><rect x="-400" y="-200" width="1200" height="600" fill="#0d1320"/><path class="land" d="${LAND}" fill="#3b3746" stroke="#5a5566" vector-effect="non-scaling-stroke" stroke-width="1"/><circle class="pring" cx="${x}" cy="${y}" fill="none" stroke="${color}"/><circle class="pin" cx="${x}" cy="${y}" fill="${color}"/></svg>
+  <div class="zoom"><button type="button" data-z="in" aria-label="拡大">＋</button><button type="button" data-z="out" aria-label="縮小">−</button><button type="button" class="s" data-z="all" aria-label="世界全体">全体</button></div></div><div class="maphint"><span class="mapnote">国境データを読み込み中…</span> ドラッグで移動、ピンチか＋−で拡大縮小。</div>`; };
+
+/* 国境と国名：開いたときに公開CDNから国境データ（amCharts geodata）を読み込む。失敗したら簡略図のまま */
+const JA_NAMES = Object.fromEntries("AF:アフガニスタン,AL:アルバニア,DZ:アルジェリア,AO:アンゴラ,AR:アルゼンチン,AM:アルメニア,AU:オーストラリア,AT:オーストリア,AZ:アゼルバイジャン,BS:バハマ,BD:バングラデシュ,BY:ベラルーシ,BE:ベルギー,BZ:ベリーズ,BJ:ベナン,BT:ブータン,BO:ボリビア,BA:ボスニア・ヘルツェゴビナ,BW:ボツワナ,BR:ブラジル,BN:ブルネイ,BG:ブルガリア,BF:ブルキナファソ,BI:ブルンジ,KH:カンボジア,CM:カメルーン,CA:カナダ,CF:中央アフリカ,TD:チャド,CL:チリ,CN:中国,CO:コロンビア,CG:コンゴ共和国,CD:コンゴ民主共和国,CR:コスタリカ,CI:コートジボワール,HR:クロアチア,CU:キューバ,CY:キプロス,CZ:チェコ,DK:デンマーク,DJ:ジブチ,DO:ドミニカ共和国,EC:エクアドル,EG:エジプト,SV:エルサルバドル,GQ:赤道ギニア,ER:エリトリア,EE:エストニア,ET:エチオピア,FJ:フィジー,FI:フィンランド,FR:フランス,GA:ガボン,GM:ガンビア,GE:ジョージア,DE:ドイツ,GH:ガーナ,GR:ギリシャ,GL:グリーンランド,GT:グアテマラ,GN:ギニア,GW:ギニアビサウ,GY:ガイアナ,HT:ハイチ,HN:ホンジュラス,HU:ハンガリー,IS:アイスランド,IN:インド,ID:インドネシア,IR:イラン,IQ:イラク,IE:アイルランド,IL:イスラエル,IT:イタリア,JM:ジャマイカ,JP:日本,JO:ヨルダン,KZ:カザフスタン,KE:ケニア,KP:北朝鮮,KR:韓国,KW:クウェート,KG:キルギス,LA:ラオス,LV:ラトビア,LB:レバノン,LS:レソト,LR:リベリア,LY:リビア,LT:リトアニア,LU:ルクセンブルク,MK:北マケドニア,MG:マダガスカル,MW:マラウイ,MY:マレーシア,ML:マリ,MR:モーリタニア,MX:メキシコ,MD:モルドバ,MN:モンゴル,ME:モンテネグロ,MA:モロッコ,MZ:モザンビーク,MM:ミャンマー,NA:ナミビア,NP:ネパール,NL:オランダ,NZ:ニュージーランド,NI:ニカラグア,NE:ニジェール,NG:ナイジェリア,NO:ノルウェー,OM:オマーン,PK:パキスタン,PS:パレスチナ,PA:パナマ,PG:パプアニューギニア,PY:パラグアイ,PE:ペルー,PH:フィリピン,PL:ポーランド,PT:ポルトガル,PR:プエルトリコ,QA:カタール,RO:ルーマニア,RU:ロシア,RW:ルワンダ,SA:サウジアラビア,SN:セネガル,RS:セルビア,SL:シエラレオネ,SG:シンガポール,SK:スロバキア,SI:スロベニア,SB:ソロモン諸島,SO:ソマリア,ZA:南アフリカ,SS:南スーダン,ES:スペイン,LK:スリランカ,SD:スーダン,SR:スリナム,SZ:エスワティニ,SE:スウェーデン,CH:スイス,SY:シリア,TW:台湾,TJ:タジキスタン,TZ:タンザニア,TH:タイ,TL:東ティモール,TG:トーゴ,TT:トリニダード・トバゴ,TN:チュニジア,TR:トルコ,TM:トルクメニスタン,UG:ウガンダ,UA:ウクライナ,AE:アラブ首長国連邦,GB:イギリス,US:アメリカ,UY:ウルグアイ,UZ:ウズベキスタン,VU:バヌアツ,VE:ベネズエラ,VN:ベトナム,EH:西サハラ,YE:イエメン,ZM:ザンビア,ZW:ジンバブエ,XK:コソボ,BH:バーレーン,MT:マルタ,KM:コモロ,MU:モーリシャス,CV:カーボベルデ,NC:ニューカレドニア,FK:フォークランド諸島,GF:仏領ギアナ,TF:仏領南方南極地域,AQ:南極".split(",").map(x => x.split(":")));
+const ISO3 = Object.fromEntries("AF:AFG,AL:ALB,DZ:DZA,AO:AGO,AR:ARG,AM:ARM,AU:AUS,AT:AUT,AZ:AZE,BS:BHS,BD:BGD,BY:BLR,BE:BEL,BZ:BLZ,BJ:BEN,BT:BTN,BO:BOL,BA:BIH,BW:BWA,BR:BRA,BN:BRN,BG:BGR,BF:BFA,BI:BDI,KH:KHM,CM:CMR,CA:CAN,CF:CAF,TD:TCD,CL:CHL,CN:CHN,CO:COL,CG:COG,CD:COD,CR:CRI,CI:CIV,HR:HRV,CU:CUB,CY:CYP,CZ:CZE,DK:DNK,DJ:DJI,DO:DOM,EC:ECU,EG:EGY,SV:SLV,GQ:GNQ,ER:ERI,EE:EST,ET:ETH,FJ:FJI,FI:FIN,FR:FRA,GA:GAB,GM:GMB,GE:GEO,DE:DEU,GH:GHA,GR:GRC,GL:GRL,GT:GTM,GN:GIN,GW:GNB,GY:GUY,HT:HTI,HN:HND,HU:HUN,IS:ISL,IN:IND,ID:IDN,IR:IRN,IQ:IRQ,IE:IRL,IL:ISR,IT:ITA,JM:JAM,JP:JPN,JO:JOR,KZ:KAZ,KE:KEN,KP:PRK,KR:KOR,KW:KWT,KG:KGZ,LA:LAO,LV:LVA,LB:LBN,LS:LSO,LR:LBR,LY:LBY,LT:LTU,LU:LUX,MK:MKD,MG:MDG,MW:MWI,MY:MYS,ML:MLI,MR:MRT,MX:MEX,MD:MDA,MN:MNG,ME:MNE,MA:MAR,MZ:MOZ,MM:MMR,NA:NAM,NP:NPL,NL:NLD,NZ:NZL,NI:NIC,NE:NER,NG:NGA,NO:NOR,OM:OMN,PK:PAK,PS:PSE,PA:PAN,PG:PNG,PY:PRY,PE:PER,PH:PHL,PL:POL,PT:PRT,PR:PRI,QA:QAT,RO:ROU,RU:RUS,RW:RWA,SA:SAU,SN:SEN,RS:SRB,SL:SLE,SG:SGP,SK:SVK,SI:SVN,SB:SLB,SO:SOM,ZA:ZAF,SS:SSD,ES:ESP,LK:LKA,SD:SDN,SR:SUR,SZ:SWZ,SE:SWE,CH:CHE,SY:SYR,TW:TWN,TJ:TJK,TZ:TZA,TH:THA,TL:TLS,TG:TGO,TT:TTO,TN:TUN,TR:TUR,TM:TKM,UG:UGA,UA:UKR,AE:ARE,GB:GBR,US:USA,UY:URY,UZ:UZB,VU:VUT,VE:VEN,VN:VNM,EH:ESH,YE:YEM,ZM:ZMB,ZW:ZWE,XK:KOS,BH:BHR,MT:MLT,KM:COM,MU:MUS,CV:CPV,NC:NCL,FK:FLK,GF:GUF,TF:ATF,AQ:ATA".split(",").map(x => x.split(":")));
+for (const [a2, a3] of Object.entries(ISO3)) if (JA_NAMES[a2]) JA_NAMES[a3] = JA_NAMES[a2];
+const loadScript = src => new Promise((ok, ng) => { const el = document.createElement("script"); el.src = src; el.onload = ok; el.onerror = () => ng(new Error("load")); document.head.appendChild(el); });
+const toShapes = feats => {
+  const out = [];
+  for (const f of feats){
+    const g = f.geometry; if (!g) continue;
+    const polys = g.type === "Polygon" ? [g.coordinates] : g.type === "MultiPolygon" ? g.coordinates : [];
+    let d = "", best = null, bestA = 0;
+    for (const poly of polys){
+      for (const ring of poly) d += "M" + ring.map(([lo, la]) => `${(lo + 180).toFixed(2)},${(78 - la).toFixed(2)}`).join("L") + "Z";
+      let x0 = 999, x1 = -999, y0 = 999, y1 = -999;
+      for (const [lo, la] of poly[0]){ x0 = Math.min(x0, lo); x1 = Math.max(x1, lo); y0 = Math.min(y0, la); y1 = Math.max(y1, la); }
+      const a = (x1 - x0) * (y1 - y0); if (a > bestA){ bestA = a; best = [x0, x1, y0, y1]; }
+    }
+    const id = String(f.id || (f.properties && f.properties.id) || "");
+    if (id === "AQ" || id === "ATA" || !best) continue;
+    out.push({id, d, name: JA_NAMES[id] || (f.properties && f.properties.name) || id, x: (best[0] + best[1]) / 2 + 180, y: 78 - (best[2] + best[3]) / 2, size: best[1] - best[0]});
+  }
+  return out;
+};
+let geoP = null, geoErr = "";
+/* 経路1：cdnjs の datamaps に入っている世界地図（Natural Earth 1:110m）を使う */
+const viaCdnjs = async () => {
+  if (!window.d3) await loadScript("https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js");
+  if (!window.topojson) await loadScript("https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js");
+  if (!window.Datamap) await loadScript("https://cdnjs.cloudflare.com/ajax/libs/datamaps/0.5.9/datamaps.world.min.js");
+  const topo = window.Datamap.prototype.worldTopo;
+  return toShapes(window.topojson.feature(topo, topo.objects.world).features);
+};
+/* 経路2：jsDelivr の amCharts geodata */
+const viaJsdelivr = async () => (await import("https://cdn.jsdelivr.net/npm/@amcharts/amcharts4-geodata@4.1.28/worldLow.js")).default;
+const loadGeo = () => geoP || (geoP = (async () => {
+  try { const r = await viaCdnjs(); if (r.length > 50) return r; geoErr += "1空 "; } catch(e){ geoErr += "1×(" + (e.message || "err").slice(0, 30) + ") "; }
+  try { const r = toShapes((await viaJsdelivr()).features); if (r.length > 50) return r; geoErr += "2空"; } catch(e){ geoErr += "2×(" + (e.message || "err").slice(0, 30) + ")"; }
+  return null;
+})());
+const paintGeo = (svg, list, iso, color) => {
+  const hit = c => c.id === iso || c.id === ISO3[iso];
+  const land = svg.querySelector(".land"); if (!land) return;
+  land.outerHTML = `<g class="land">${list.map(c => `<path d="${c.d}" fill="${hit(c) ? color : "#3b3746"}" fill-opacity="${hit(c) ? .45 : 1}" stroke="#77718a" stroke-width=".7" vector-effect="non-scaling-stroke"/>`).join("")}</g><g class="names">${list.map(c => `<text x="${c.x}" y="${c.y}" data-s="${c.size}" text-anchor="middle" dominant-baseline="middle" fill="${hit(c) ? "#fff" : "rgba(245,243,238,.75)"}" font-weight="${hit(c) ? 900 : 700}">${esc(c.name)}</text>`).join("")}</g>`;
+};
+/* 小窓の開閉 */
+const pop = $("#pop"); let openBtn = null;
+const closePop = () => { if (openBtn) openBtn.setAttribute("aria-expanded", "false"); openBtn = null; pop.hidden = true; };
+document.addEventListener("click", e => {
+  const g = e.target.closest(".g");
+  if (!g){ if (!e.target.closest("#pop")) closePop(); return; }
+  e.stopPropagation();
+  if (openBtn === g){ closePop(); return; }
+  closePop(); openBtn = g; g.setAttribute("aria-expanded", "true");
+  const v = GLOSS[g.dataset.g] || "", person = Array.isArray(v), place = v && v.place;
+  const color = getComputedStyle(g.closest(".card") || document.body).getPropertyValue("--a").trim() || "#ffd60a";
+  mapState = null;
+  pop.classList.toggle("wide", !!place);
+  pop.innerHTML = place ? `<small>地名</small><b>${esc(place[2])}</b>${esc(v.d)}${mapHTML(place[0], place[1], color)}`
+    : `${person ? '<small>人物</small>' : ""}<b>${esc(person ? v[0] : g.dataset.g)}</b>${esc(person ? v[1] : v)}`;
+  pop.hidden = false;
+  if (place) initMap(pop, place[0], place[1], color);
+  if (place){ const myMap = mapState; loadGeo().then(list => { if (mapState !== myMap) return; const note = pop.querySelector(".mapnote");
+    if (list){ paintGeo(myMap.svg, list, v.iso, color); myMap.svg.appendChild(myMap.ring); myMap.svg.appendChild(myMap.pin); drawMap(); if (note) note.textContent = "国境は目安です。"; }
+    else if (note) note.textContent = "国境データを読み込めなかったため、簡略図で表示しています（" + geoErr.trim() + "）。"; }); }
+  const r = g.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight;
+  const left = Math.min(Math.max(16, r.left + r.width / 2 - w / 2), innerWidth - w - 16);
+  const below = r.bottom + 10 + h < innerHeight - 90 || r.top - h - 10 < 8;
+  pop.style.left = left + "px";
+  pop.style.top = Math.max(8, Math.min(below ? r.bottom + 10 : r.top - h - 10, innerHeight - h - 8)) + "px";
+}, true);
+document.addEventListener("scroll", e => { if (!pop.contains(e.target)) closePop(); }, true);
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") closePop();
+  const g = e.target.closest && e.target.closest(".g");
+  if (g && (e.key === "Enter" || e.key === " ")){ e.preventDefault(); g.click(); }
+});
+
+/* 共有リンク：記事ごとに #n01 のようなアドレスを付ける */
+const ARCHIVED = /\/archive\/\d{4}-\d{2}-\d{2}\/?/.test(location.pathname);
+const ROOT = ARCHIVED ? location.pathname.replace(/archive\/.*$/, "") : location.pathname.replace(/[^/]*$/, "");
+const DAY = ISSUE.date.slice(0, 10).replace(/\./g, "-");
+const BASE = location.origin + ROOT + "archive/" + DAY + "/";
+const tag = k => k > list.length || (k === list.length && !feed.querySelector(".others")) ? "matome" : k === list.length ? "others" : "n" + String(ORDER.indexOf(list[k]) + 1).padStart(2, "0");
+const toast = $("#toast"); let tt = 0;
+const say = (html, ms = 2200) => { toast.innerHTML = html; toast.hidden = false; clearTimeout(tt); tt = setTimeout(() => toast.hidden = true, ms); };
+/* シェア：記事のリンクボタンでメニューを出し、記事かサイトかを選ぶ。
+   スマホは端末の共有メニュー（LINE・Xなど）を開き、それがない環境ではリンクをコピーする */
+/* サイトのURLには ?s=dope を付ける。旧名時代にLINEやXが覚えたカードではなく、新しいカードを読み直させるため */
+const SITE_TITLE = "DOPE｜縦スクロールでニュースを読む。", SITE_URL = location.origin + ROOT + "?s=dope";
+const artUrl = no => BASE + "n" + String(no).padStart(2, "0") + "/?s=dope";
+const copyLink = async (url, msg) => {
+  try { await navigator.clipboard.writeText(url); say(msg); }
+  catch (err) { say(`コピーできませんでした。長押しで選んでコピーしてください：<br>${esc(url)}`, 6000); }
+};
+const shareTo = async (title, url, msg) => {
+  if (navigator.share){ try { await navigator.share({title, url}); return; } catch (err){ if (err && err.name === "AbortError") return; } }
+  copyLink(url, msg);
+};
+const ssheet = $("#shareSheet"); let shareNo = 0, shareLast = null;
+const openShare = no => {
+  closePop(); shareNo = no; shareLast = document.activeElement;
+  const n = NEWS[ORDER[no - 1]]; $("#shareTitle").textContent = n ? plain(n.title) : "";
+  ssheet.hidden = false; $("#shArt").focus({preventScroll:true});
+};
+const closeShare = () => { if (ssheet.hidden) return; ssheet.hidden = true; if (shareLast && shareLast.focus) shareLast.focus({preventScroll:true}); };
+feed.addEventListener("click", e => {
+  const b = e.target.closest("[data-share]");
+  if (b){ e.stopPropagation(); openShare(+b.dataset.share); return; }
+  if (e.target.closest("[data-share-site]")){ e.stopPropagation(); shareTo(SITE_TITLE, SITE_URL, "DOPEのリンクをコピーしました"); }
+}, true);
+$("#shArt").onclick = () => { const n = NEWS[ORDER[shareNo - 1]]; closeShare(); shareTo(n ? plain(n.title) + "｜DOPE" : SITE_TITLE, artUrl(shareNo), "この記事のリンクをコピーしました"); };
+$("#shSite").onclick = () => { closeShare(); shareTo(SITE_TITLE, SITE_URL, "DOPEのリンクをコピーしました"); };
+$("#shCopy").onclick = () => { closeShare(); copyLink(artUrl(shareNo), "この記事のリンクをコピーしました"); };
+$("#shX").onclick = closeShare;
+ssheet.addEventListener("click", e => { if (e.target === ssheet) closeShare(); });
+ssheet.addEventListener("keydown", e => {
+  if (e.key === "Escape"){ e.stopPropagation(); closeShare(); return; }
+  if (e.key !== "Tab") return;
+  const f = [...ssheet.querySelectorAll("button")]; const i = f.indexOf(document.activeElement);
+  if (e.shiftKey && i <= 0){ e.preventDefault(); f[f.length - 1].focus(); }
+  else if (!e.shiftKey && i === f.length - 1){ e.preventDefault(); f[0].focus(); }
+});
+{ /* 下へスワイプで閉じる */
+  const sp = ssheet.querySelector(".panel"); let sy = null;
+  sp.addEventListener("touchstart", e => { sy = e.touches[0].clientY; }, {passive:true});
+  sp.addEventListener("touchmove", e => { if (sy !== null && e.touches[0].clientY - sy > 60){ sy = null; closeShare(); } }, {passive:true});
+}
+/* ホーム画面に追加（アプリとして使う）。Android等はブラウザの追加画面を出し、iPhoneは手順を案内する */
+let installEvt = null;
+addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; });
+const asheet = $("#appSheet"); let appLast = null;
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const openAppSheet = () => {
+  closePop(); appLast = document.activeElement;
+  $("#appSteps").innerHTML = isIOS
+    ? '<li>画面下（または上）の<b>共有ボタン</b>（四角から上向きの矢印）を押す</li><li>メニューを下へたどって<b>「ホーム画面に追加」</b>を押す</li><li>右上の<b>「追加」</b>を押すと、ホーム画面にDOPEのアイコンが出ます</li>'
+    : '<li>ブラウザの<b>メニュー</b>（︙ や … のボタン）を開く</li><li><b>「ホーム画面に追加」</b>または<b>「アプリをインストール」</b>を押す</li><li>確認が出たら<b>「追加」</b>（または「インストール」）を押す</li>';
+  asheet.hidden = false; $("#appX").focus({preventScroll:true});
+};
+const closeAppSheet = () => { if (asheet.hidden) return; asheet.hidden = true; if (appLast && appLast.focus) appLast.focus({preventScroll:true}); };
+feed.addEventListener("click", async e => {
+  if (!e.target.closest("[data-install]")) return;
+  e.stopPropagation();
+  if (installEvt){ try { await installEvt.prompt(); await installEvt.userChoice; installEvt = null; return; } catch (err) { installEvt = null; } }
+  openAppSheet();
+}, true);
+$("#appX").onclick = closeAppSheet;
+asheet.addEventListener("click", e => { if (e.target === asheet) closeAppSheet(); });
+asheet.addEventListener("keydown", e => { if (e.key === "Escape"){ e.stopPropagation(); closeAppSheet(); } });
+/* オフライン対応（https のときだけ） */
+if ("serviceWorker" in navigator && location.protocol === "https:") addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
+
+const openFromHash = h => {
+  const m = /^#n(\d{2})$/.exec(typeof h === "string" ? h : location.hash); if (!m) return;
+  const idx = ORDER[+m[1] - 1]; if (idx === undefined) return;
+  if (cat !== "all"){ cat = "all"; render(); }
+  const k = list.indexOf(idx); if (k > -1) feed.children[k].scrollIntoView({behavior:"auto"});
+};
+addEventListener("hashchange", openFromHash);
+
+/* 縦スクロールの引っかかり対策：中身がはみ出すパネルだけ内側でスクロールさせる */
+const markTall = () => feed.querySelectorAll(".pane").forEach(p => p.classList.toggle("tall", p.scrollHeight > p.clientHeight + 4));
+addEventListener("resize", () => requestAnimationFrame(markTall));
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(markTall);
+
+/* 半透明の上下バー：高さを測って、カードの中身がバーに隠れないようにする */
+const barSize = () => { const r = document.documentElement.style; r.setProperty("--hh", document.querySelector("header").offsetHeight + "px"); r.setProperty("--fh", document.querySelector("footer").offsetHeight + "px"); };
+barSize(); addEventListener("resize", barSize);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { barSize(); markTall(); });
+
+/* 過去号：アーカイブ内のページでは「最新号へ」を出し、リンク先をそろえる */
+if (ARCHIVED){ const l = $("#latest"); l.href = ROOT; l.hidden = false; }
+const fixBackno = () => feed.querySelectorAll(".backno").forEach(a => a.href = ROOT + "archive/");
+
+/* 号えらび：上の日付を押すと、保存されている号へすぐ移れる。号の目録は archive/days.json（tools/publish_day.py が作る） */
+const sheet = $("#sheet"), dateBtn = $("#dateBtn"), strip = $("#strip");
+$("#sheetAll").href = ROOT + "archive/";
+let daysP = null, lastFocus = null;
+const loadDays = () => daysP || (daysP = fetch(ROOT + "archive/days.json", {cache:"no-cache"})
+  .then(r => r.ok ? r.json() : Promise.reject(new Error("HTTP " + r.status)))
+  .catch(e => { daysP = null; throw e; }));
+const paintDays = days => {
+  if (!Array.isArray(days) || !days.length){ strip.innerHTML = '<p class="snote">まだ保存された号がありません。</p>'; return; }
+  strip.innerHTML = days.map((d, i) => {
+    const [, m, dd] = d.date.split("-"), here = d.date === DAY;
+    const href = i === 0 ? ROOT : ROOT + "archive/" + d.date + "/";
+    const badges = (i === 0 ? '<i>最新</i>' : "") + (here ? '<i class="now">表示中</i>' : "");
+    return `<a class="day${here ? " here" : ""}" href="${esc(href)}"${here ? ' aria-current="page"' : ""}>
+      <span class="dtop"><b>${+m}.${+dd}</b><small>${esc(d.wd)}曜</small></span><span class="badges">${badges}</span>
+      <span class="dn">${+d.n}本</span><span class="dt">${esc(d.top || "")}</span></a>`;
+  }).join("");
+  const h = strip.querySelector(".here"); if (h) strip.scrollLeft = h.offsetLeft - 16;
+};
+const sheetFocus = () => [...sheet.querySelectorAll("a[href],button")];
+const openSheet = () => {
+  closePop(); lastFocus = document.activeElement;
+  sheet.hidden = false; dateBtn.setAttribute("aria-expanded", "true");
+  strip.innerHTML = '<p class="snote">読み込み中…</p>'; $("#sheetX").focus();
+  loadDays().then(paintDays).catch(() => { strip.innerHTML = `<p class="snote">号の一覧を読み込めませんでした。<a href="${esc(ROOT + "archive/")}">過去の号の一覧</a>から選んでください。</p>`; })
+    .finally(() => { if (!sheet.hidden){ const t = strip.querySelector(".here") || strip.querySelector(".day"); if (t) t.focus({preventScroll:true}); } });
+};
+const closeSheet = () => { if (sheet.hidden) return; sheet.hidden = true; dateBtn.setAttribute("aria-expanded", "false"); if (lastFocus && lastFocus.focus) lastFocus.focus({preventScroll:true}); };
+dateBtn.addEventListener("click", () => sheet.hidden ? openSheet() : closeSheet());
+$("#sheetX").addEventListener("click", closeSheet);
+sheet.addEventListener("click", e => {
+  if (e.target === sheet){ closeSheet(); return; }
+  if (e.target.closest(".day.here")){ e.preventDefault(); closeSheet(); }
+});
+sheet.addEventListener("keydown", e => {
+  if (e.key === "Escape"){ e.stopPropagation(); closeSheet(); return; }
+  if (e.key !== "Tab") return;
+  const f = sheetFocus(); if (!f.length) return;
+  const i = f.indexOf(document.activeElement);
+  if (e.shiftKey && i <= 0){ e.preventDefault(); f[f.length - 1].focus(); }
+  else if (!e.shiftKey && i === f.length - 1){ e.preventDefault(); f[0].focus(); }
+});
+render();
+openFromHash(START_HASH);
+fixBackno();
+markTall();
+}
+</script>
+<!-- Cloudflare Web Analytics（訪問者数の計測。Cookieを使わず個人を追跡しない） --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "1fb427c6ee564f8a877b85efc6f19219"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>
