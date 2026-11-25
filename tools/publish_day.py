@@ -11,6 +11,7 @@ import html
 import json
 import os
 import re
+import shutil
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -181,6 +182,10 @@ def main():
     it = read_issue(src)
     dst = os.path.join(ARCH, it["iso"])
     os.makedirs(dst, exist_ok=True)
+    # 同じ日の号を作り直したときに、古い見出しの入口ページと画像が残らないよう、その日の分は消して作り直す
+    for name in os.listdir(dst):
+        if re.fullmatch(r"n\d{2}", name):
+            shutil.rmtree(os.path.join(dst, name), ignore_errors=True)
     # 保存する号では、共有時のURL（og:url）をその日のページにする
     s = open(src, encoding="utf-8").read().replace(
         f'<meta property="og:url" content="{SITE}">',
