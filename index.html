@@ -8,7 +8,13 @@
 <meta property="og:title" content="ドパガキニュース">
 <meta property="og:description" content="縦で次のニュース、横で詳細。刺激は強いけど中身は本物。">
 <meta property="og:type" content="website">
-<meta name="twitter:card" content="summary">
+<meta property="og:site_name" content="ドパガキニュース">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:url" content="https://wisteria1004.github.io/dopa-news/">
+<meta property="og:image" content="https://wisteria1004.github.io/dopa-news/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap" rel="stylesheet">
@@ -748,7 +754,8 @@ const say = (html, ms = 2200) => { toast.innerHTML = html; toast.hidden = false;
 feed.addEventListener("click", async e => {
   const b = e.target.closest("[data-share]"); if (!b) return;
   e.stopPropagation();
-  const url = BASE + "#n" + String(b.dataset.share).padStart(2, "0");
+  /* 記事ごとの入口ページ（archive/日付/nXX/）を渡す。SNSのリンクカードにその記事の見出しと要約が出る */
+  const url = BASE + "n" + String(b.dataset.share).padStart(2, "0") + "/";
   try { await navigator.clipboard.writeText(url); say("この記事のリンクをコピーしました"); }
   catch (err) { say(`コピーできませんでした。長押しで選んでコピーしてください：<br>${esc(url)}`, 6000); }
 }, true);

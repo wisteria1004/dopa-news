@@ -4,17 +4,21 @@
 使い方（リポジトリの一番上で）:  python3 tools/publish_day.py
 - index.html の ISSUE.date から日付を読み、archive/YYYY-MM-DD/index.html にそのままコピーする。
 - archive/ 以下の全号から archive/index.html（過去号の一覧）と archive/days.json（号の目録）を作り直す。
+- 各号の記事ごとに、共有用の入口ページ archive/YYYY-MM-DD/nXX/index.html を作る。
+  SNSにURLを貼ると、その記事の見出しと要約がリンクカードに出る。開くと記事へ移る。
 """
 import html
 import json
 import os
 import re
-import shutil
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ARCH = os.path.join(ROOT, "archive")
 WD = "月火水木金土日"
+SITE = "https://wisteria1004.github.io/dopa-news/"   # 公開URL（末尾の / まで）
+SITE_NAME = "ドパガキニュース"
+OG_IMAGE = SITE + "assets/og.png"
 
 
 def read_issue(path):
@@ -28,11 +32,15 @@ def read_issue(path):
     block = s[i:j]
     titles = [json.loads('"' + t + '"') for t in re.findall(r'"?title"?\s*:\s*"((?:[^"\\]|\\.)*)"', block)]
     titles = [re.sub(r"<[^>]+>", "", t) for t in titles]
+    leads = [re.sub(r"<[^>]+>", "", json.loads('"' + t + '"')) for t in re.findall(r'"?lead"?\s*:\s*"((?:[^"\\]|\\.)*)"', block)]
+    if len(leads) != len(titles):
+        leads = [""] * len(titles)
     om = re.search(r"const ORDER = \[([^\]]*)\]", s)
     order = [int(x) for x in om.group(1).split(",") if x.strip()] if om else list(range(len(titles)))
     cats = re.findall(r'"?cat"?\s*:\s*"(world|tech|sports)"', block)
     return dict(iso=f"{y}-{mo}-{d}", y=int(y), m=int(mo), d=int(d),
                 titles=[titles[k] for k in order if k < len(titles)],
+                leads=[leads[k] for k in order if k < len(leads)],
                 cats=[cats[k] for k in order if k < len(cats)])
 
 
@@ -41,12 +49,58 @@ def weekday(y, m, d):
     return WD[datetime.date(y, m, d).weekday()]
 
 
+def build_entries(day, it):
+    """記事ごとの共有用入口ページを作る（リンクカード用）。"""
+    base = os.path.join(ARCH, day)
+    for n, (title, lead) in enumerate(zip(it["titles"], it["leads"]), 1):
+        no = f"n{n:02d}"
+        url = f"{SITE}archive/{day}/{no}/"
+        t, l = html.escape(title), html.escape(lead)
+        page = f'''<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{t}｜{SITE_NAME}</title>
+<meta name="description" content="{l}">
+<link rel="canonical" href="{url}">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="{SITE_NAME}">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="{t}">
+<meta property="og:description" content="{l}">
+<meta property="og:url" content="{url}">
+<meta property="og:image" content="{OG_IMAGE}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{t}">
+<meta name="twitter:description" content="{l}">
+<script>location.replace("../#{no}");</script>
+<style>body{{margin:0;background:#08080d;color:#f5f3ee;font:500 16px/1.7 system-ui,sans-serif}}main{{max-width:620px;margin:0 auto;padding:40px 20px}}small{{color:#a39da8}}h1{{font-size:26px;line-height:1.4}}a{{color:#ffd60a;font-weight:700}}</style>
+</head>
+<body>
+<main>
+<small>{SITE_NAME}・{it["m"]}月{it["d"]}日号</small>
+<h1>{t}</h1>
+<p>{l}</p>
+<p><a href="../#{no}">記事を読む</a></p>
+</main>
+</body>
+</html>
+'''
+        os.makedirs(os.path.join(base, no), exist_ok=True)
+        with open(os.path.join(base, no, "index.html"), "w", encoding="utf-8") as f:
+            f.write(page)
+
+
 def build_list():
     days = sorted([d for d in os.listdir(ARCH) if re.fullmatch(r"\d{4}-\d{2}-\d{2}", d)
                    and os.path.exists(os.path.join(ARCH, d, "index.html"))], reverse=True)
     items, catalog = [], []
     for d in days:
         it = read_issue(os.path.join(ARCH, d, "index.html"))
+        build_entries(d, it)
         catalog.append(dict(date=d, wd=weekday(it["y"], it["m"], it["d"]), n=len(it["titles"]),
                             top=it["titles"][0] if it["titles"] else ""))
         cnt = {k: it["cats"].count(k) for k in ("world", "tech", "sports")}
@@ -105,7 +159,12 @@ def main():
     it = read_issue(src)
     dst = os.path.join(ARCH, it["iso"])
     os.makedirs(dst, exist_ok=True)
-    shutil.copyfile(src, os.path.join(dst, "index.html"))
+    # 保存する号では、共有時のURL（og:url）をその日のページにする
+    s = open(src, encoding="utf-8").read().replace(
+        f'<meta property="og:url" content="{SITE}">',
+        f'<meta property="og:url" content="{SITE}archive/{it["iso"]}/">', 1)
+    with open(os.path.join(dst, "index.html"), "w", encoding="utf-8") as f:
+        f.write(s)
     days = build_list()
     print(f"保存: archive/{it['iso']}/index.html（{len(it['titles'])}本）。過去号は全{len(days)}号。")
 
