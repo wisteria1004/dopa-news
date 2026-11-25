@@ -25,6 +25,7 @@ WD = "月火水木金土日"
 SITE = "https://wisteria1004.github.io/dopa-news/"   # 公開URL（末尾の / まで）
 SITE_NAME = "DOPE"
 OG_IMAGE = SITE + "assets/og.png"
+CARD_VER = "2"   # カード画像を作り直したときに上げる（アプリに残った古い画像を読み直させるため）
 
 
 def read_issue(path):
@@ -73,7 +74,7 @@ def build_entries(day, it):
                 make_card(card, it["raw_titles"][n - 1], it["accents"][n - 1], it["cats"][n - 1], it["m"], it["d"], SITE_NAME)
             except Exception as e:
                 print(f"カード画像を作れませんでした（{day} {no}）：{e}")
-        image = f"{url}card.png" if os.path.exists(card) else OG_IMAGE
+        image = f"{url}card.png?v={CARD_VER}" if os.path.exists(card) else OG_IMAGE
         t, l = html.escape(title), html.escape(lead)
         page = f'''<!DOCTYPE html>
 <html lang="ja">
@@ -95,6 +96,8 @@ def build_entries(day, it):
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="{t}">
 <meta name="twitter:description" content="{l}">
+<meta name="twitter:image" content="{image}">
+<meta property="og:image:alt" content="{t}">
 <script>location.replace("../#{no}");</script>
 <style>body{{margin:0;background:#08080d;color:#f5f3ee;font:500 16px/1.7 system-ui,sans-serif}}main{{max-width:620px;margin:0 auto;padding:40px 20px}}small{{color:#a39da8}}h1{{font-size:26px;line-height:1.4}}a{{color:#ffd60a;font-weight:700}}</style>
 </head>

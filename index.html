@@ -779,7 +779,7 @@ const say = (html, ms = 2200) => { toast.innerHTML = html; toast.hidden = false;
    スマホは端末の共有メニュー（LINE・Xなど）を開き、それがない環境ではリンクをコピーする */
 /* サイトのURLには ?s=dope を付ける。旧名時代にLINEやXが覚えたカードではなく、新しいカードを読み直させるため */
 const SITE_TITLE = "DOPE｜縦スクロールでニュースを読む。", SITE_URL = location.origin + ROOT + "?s=dope";
-const artUrl = no => BASE + "n" + String(no).padStart(2, "0") + "/";
+const artUrl = no => BASE + "n" + String(no).padStart(2, "0") + "/?s=dope";
 const copyLink = async (url, msg) => {
   try { await navigator.clipboard.writeText(url); say(msg); }
   catch (err) { say(`コピーできませんでした。長押しで選んでコピーしてください：<br>${esc(url)}`, 6000); }

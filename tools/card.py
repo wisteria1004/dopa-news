@@ -160,5 +160,6 @@ def make_card(path, title_html, accent, cat, m, d, site_name="DOPE"):
     dr.text((X, H - 74), CATCH, font=F["jp"](26), fill=INK)
 
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    im.quantize(colors=48, method=Image.Quantize.MEDIANCUT).save(path, optimize=True)
+    # 減色（パレット形式）のPNGは一部のアプリで読めないことがあるので、通常のフルカラーPNGで保存する
+    im.save(path, optimize=True)
     return True
