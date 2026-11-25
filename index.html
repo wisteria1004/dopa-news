@@ -718,10 +718,24 @@ function othersCard(){
 
 /* 見出しの改行：文節（助詞・句読点のあと）でまとまりを作り、その途中では改行しない */
 const PHRASE = /([^、。！？」）]*?(?:から|まで|より|とは|では|には|へは|は|が|を|に|で|と|の|へ|も|や|、|。|！|？|」|）)(?=[^ぁ-んー、。！？」）]|$)|[^、。！？」）]+$)/g;
+/* 長すぎる文節（7字以上）は、さらに自然な切れ目で分ける。1行に入らない文節が丸ごと次の行へ送られ、
+   「米、」だけが1行目に残るような改行を防ぐ。切れ目：「など」「ほか」「・」の後／漢字・カタカナに付いた助詞のあとにひらがなが続くところ／数字の前（「1億2千万」の途中は除く）／カタカナと漢字の境目（「フアン氏」「千万ドル」のような短い付属語は切らない） */
+const SUBCUT = /(?<=など|ほか|・)|(?<=[一-龯々ァ-ヴー][がはにで]|を)(?=[ぁ-ん]{3}|[ぁ-ん]{2}[一-龯々])|(?<=[ぁ-ん])(?=[ァ-ヴ][ァ-ヴー]{2})|(?<=[^\d０-９.,，億万千百十兆約第])(?=[\d０-９])|(?<=[ァ-ヴー]{2}[人氏系派産製軍州省党側]?)(?=[一-龯々]{2})|(?<=[一-龯々]{2})(?<![億万千百十兆])(?=[ァ-ヴー]{3})/;
+const splitLong = p => {
+  if (p.length < 7) return [p];
+  const out = [];
+  for (const x of p.split(SUBCUT).filter(Boolean)){
+    if (out.length && (x.length < 2 || out[out.length - 1].length < 2)) out[out.length - 1] += x;   // 1字だけのかけらは前とつなぐ
+    else out.push(x);
+  }
+  return out;
+};
 const phrase = el => {
   const runs = [...el.childNodes].map(n => [n.textContent, n.nodeType === 1]);
   const text = runs.map(r => r[0]).join("");
-  const parts = text.split(/(?=「|（)/).flatMap(x => x.match(PHRASE) || [x]).filter(Boolean);
+  const parts = text.split(/(?=「|（)/).flatMap(x => x.match(PHRASE) || [x]).filter(Boolean)
+    .reduce((a, x) => { if (a.length && /^(最も|最)$/.test(a[a.length - 1])) a[a.length - 1] += x; else a.push(x); return a; }, [])   // 「最も」は次とつなぐ
+    .flatMap(splitLong);
   if (parts.join("") !== text) return;
   const acc = []; for (const [t, a] of runs) for (const _ of t) acc.push(a);
   el.textContent = ""; let k = 0;
