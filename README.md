@@ -17,5 +17,6 @@
 ## 共有（リンクカード）
 - 記事のリンクボタンは `archive/日付/nXX/`（記事ごとの入口ページ）をコピーする。SNSに貼ると、その記事の見出しと要約が画像付きのカードで出て、開くと記事へ移る。
 - 入口ページは `tools/publish_day.py` が全号ぶん毎回作り直す。
-- カード画像は `assets/og.png`（1200×630）。元のデザインは `tools/og.html`。サイト名を変えるときは、og.html を直して画像を撮り直し、index.html の og: 系の項目と publish_day.py の `SITE_NAME` を変える。
+- 記事ごとのカード画像 `archive/日付/nXX/card.png` は `tools/card.py` が見出しから自動で作る（記事の色の背景＋黒い見出し、強調語句に白い蛍光ペン）。既にある画像は作り直さない。作れない環境では共通画像を使う。
+- トップページのカード画像は `assets/og.png`（1200×630）。元のデザインは `tools/og.html`。サイト名を変えるときは、og.html を直して画像を撮り直し、index.html の og: 系の項目と publish_day.py の `SITE_NAME` を変える。
 

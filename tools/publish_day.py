@@ -13,6 +13,12 @@ import os
 import re
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+try:
+    from card import make_card
+except Exception:
+    make_card = None
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ARCH = os.path.join(ROOT, "archive")
 WD = "月火水木金土日"
@@ -30,8 +36,11 @@ def read_issue(path):
     i = s.index("const NEWS = [")
     j = s.index("const ORDER", i)
     block = s[i:j]
-    titles = [json.loads('"' + t + '"') for t in re.findall(r'"?title"?\s*:\s*"((?:[^"\\]|\\.)*)"', block)]
-    titles = [re.sub(r"<[^>]+>", "", t) for t in titles]
+    raw_titles = [json.loads('"' + t + '"') for t in re.findall(r'"?title"?\s*:\s*"((?:[^"\\]|\\.)*)"', block)]
+    titles = [re.sub(r"<[^>]+>", "", t) for t in raw_titles]
+    accents = re.findall(r'"?accent"?\s*:\s*"(#[0-9a-fA-F]{6})"', block)
+    if len(accents) != len(titles):
+        accents = ["#ff2e88"] * len(titles)
     leads = [re.sub(r"<[^>]+>", "", json.loads('"' + t + '"')) for t in re.findall(r'"?lead"?\s*:\s*"((?:[^"\\]|\\.)*)"', block)]
     if len(leads) != len(titles):
         leads = [""] * len(titles)
@@ -41,6 +50,8 @@ def read_issue(path):
     return dict(iso=f"{y}-{mo}-{d}", y=int(y), m=int(mo), d=int(d),
                 titles=[titles[k] for k in order if k < len(titles)],
                 leads=[leads[k] for k in order if k < len(leads)],
+                raw_titles=[raw_titles[k] for k in order if k < len(raw_titles)],
+                accents=[accents[k] for k in order if k < len(accents)],
                 cats=[cats[k] for k in order if k < len(cats)])
 
 
@@ -55,6 +66,14 @@ def build_entries(day, it):
     for n, (title, lead) in enumerate(zip(it["titles"], it["leads"]), 1):
         no = f"n{n:02d}"
         url = f"{SITE}archive/{day}/{no}/"
+        # 見出し入りのカード画像（まだなければ作る）。作れなければ共通画像を使う
+        card = os.path.join(base, no, "card.png")
+        if not os.path.exists(card) and make_card:
+            try:
+                make_card(card, it["raw_titles"][n - 1], it["accents"][n - 1], it["cats"][n - 1], it["m"], it["d"], SITE_NAME)
+            except Exception as e:
+                print(f"カード画像を作れませんでした（{day} {no}）：{e}")
+        image = f"{url}card.png" if os.path.exists(card) else OG_IMAGE
         t, l = html.escape(title), html.escape(lead)
         page = f'''<!DOCTYPE html>
 <html lang="ja">
@@ -70,7 +89,7 @@ def build_entries(day, it):
 <meta property="og:title" content="{t}">
 <meta property="og:description" content="{l}">
 <meta property="og:url" content="{url}">
-<meta property="og:image" content="{OG_IMAGE}">
+<meta property="og:image" content="{image}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
