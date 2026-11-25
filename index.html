@@ -747,6 +747,24 @@ const phrase = el => {
     flush(); el.appendChild(ph);
   }
 };
+/* 見出しを少し（最大8%）小さくすれば1行減るなら、小さくする。
+   例：「NVIDIA、辞任した／フアン氏を／CEOに戻す」の3行を、2行に収める */
+const headLines = h => Math.round(h.getBoundingClientRect().height / parseFloat(getComputedStyle(h).lineHeight));
+const fitHeads = () => {
+  feed.querySelectorAll(".card:not(.end) .pane:first-child h2").forEach(h => {
+    h.style.fontSize = "";
+    const base = parseFloat(getComputedStyle(h).fontSize), n = headLines(h);
+    if (n < 3) return;
+    for (let f = 0.98; f >= 0.919; f -= 0.02){
+      h.style.fontSize = (base * f).toFixed(1) + "px";
+      if (headLines(h) < n) return;
+    }
+    h.style.fontSize = "";
+  });
+};
+let fitT = 0;
+addEventListener("resize", () => { clearTimeout(fitT); fitT = setTimeout(fitHeads, 150); });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitHeads);
 function render(){
   list = ORDER.filter(i => cat === "all" || NEWS[i].cat === cat);
   const counts = {all:NEWS.length}; NEWS.forEach(n => counts[n.cat] = (counts[n.cat]||0) + 1);
@@ -769,6 +787,7 @@ function render(){
     t.parentElement.querySelectorAll(".bars i").forEach((b, x) => b.classList.toggle("on", x === j));
   }, {passive:true}));
   feed.querySelectorAll("h2").forEach(phrase);
+  fitHeads();
   if (typeof fixBackno === "function") fixBackno();
   feed.querySelectorAll(".card").forEach(c => io.observe(c));
   if (typeof markTall === "function") requestAnimationFrame(markTall);
