@@ -17,7 +17,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ARCH = os.path.join(ROOT, "archive")
 WD = "月火水木金土日"
 SITE = "https://wisteria1004.github.io/dopa-news/"   # 公開URL（末尾の / まで）
-SITE_NAME = "ドパガキニュース"
+SITE_NAME = "DOPE"
 OG_IMAGE = SITE + "assets/og.png"
 
 
@@ -114,8 +114,8 @@ def build_list():
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>過去の号｜ドパガキニュース</title>
-<meta name="description" content="ドパガキニュースの過去の号の一覧">
+<title>過去の号｜{SITE_NAME}</title>
+<meta name="description" content="{SITE_NAME}の過去の号の一覧">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap" rel="stylesheet">
