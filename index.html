@@ -777,7 +777,8 @@ const toast = $("#toast"); let tt = 0;
 const say = (html, ms = 2200) => { toast.innerHTML = html; toast.hidden = false; clearTimeout(tt); tt = setTimeout(() => toast.hidden = true, ms); };
 /* シェア：記事のリンクボタンでメニューを出し、記事かサイトかを選ぶ。
    スマホは端末の共有メニュー（LINE・Xなど）を開き、それがない環境ではリンクをコピーする */
-const SITE_TITLE = "DOPE｜縦スクロールでニュースを読む。", SITE_URL = location.origin + ROOT;
+/* サイトのURLには ?s=dope を付ける。旧名時代にLINEやXが覚えたカードではなく、新しいカードを読み直させるため */
+const SITE_TITLE = "DOPE｜縦スクロールでニュースを読む。", SITE_URL = location.origin + ROOT + "?s=dope";
 const artUrl = no => BASE + "n" + String(no).padStart(2, "0") + "/";
 const copyLink = async (url, msg) => {
   try { await navigator.clipboard.writeText(url); say(msg); }
